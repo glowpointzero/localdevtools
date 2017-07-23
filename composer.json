@@ -1,0 +1,12 @@
+{
+    "require": {
+        "symfony/console": "*",
+        "symfony/filesystem": "^3.3",
+        "symfony/validator": "^3.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "GlowPointZero\\LocalDevTools\\": "src/Classes"
+        }
+    }
+}

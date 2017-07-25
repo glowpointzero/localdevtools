@@ -11,6 +11,10 @@ class DiagnoseCommand extends AbstractCommand
     const COMMAND_NAME = 'configuration:diagnose';
     const COMMAND_DESCRIPTION = 'Diagnoses your local \'Local Dev Tools\' setup.';
     
+    
+    /**
+     * {@inheritdoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $localConfiguration = $this->localConfiguration->getAll();

@@ -12,6 +12,9 @@ class SetupCommand extends AbstractCommand
     const COMMAND_NAME = 'setup';
     const COMMAND_DESCRIPTION = 'Sets up your local dev environment tools.';    
     
+    /**
+     * {@inheritdoc}
+     */
     public function execute(InputInterface $input, OutputInterface $output)
     {
         
@@ -49,9 +52,9 @@ class SetupCommand extends AbstractCommand
         }
         
         
-        $this->io->confirm('We\'re done here. Run configuration diagnose (it won\'t hurt)?');
-        
-        // Run diagnose
-        $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);
+        $runDiagnose = $this->io->confirm('We\'re done here. Run configuration diagnose (it won\'t hurt)?');
+        if ($runDiagnose) {
+            $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);
+        }
     }
 }

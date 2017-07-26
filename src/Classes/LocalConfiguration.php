@@ -14,7 +14,7 @@ class LocalConfiguration
     
     const CONFIGURATION_DIRECTORY = '.localdevtools'; // ... under user home
     const CONFIGURATION_FILE_NAME = 'config';
-    
+      
     var $isLoaded = false;
     var $configuration = [
         'hostConfigurationFilesRootPath' => '',
@@ -160,5 +160,13 @@ class LocalConfiguration
     public function save()
     {
         $this->fileSystem->dumpFile($this->getConfigurationFilePathAbs(), json_encode($this->configuration));
+    }
+    
+    /**
+     * @todo
+     */
+    public function validate()
+    {
+        
     }
 }

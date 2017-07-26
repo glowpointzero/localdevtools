@@ -22,6 +22,12 @@ abstract class AbstractCommand extends Command
     var $io;
     
     
+    /** 
+     * @var InputInterface 
+     */
+    var $inputInterface;
+    
+    
     /**
      * @var Filesystem
      */
@@ -41,6 +47,7 @@ abstract class AbstractCommand extends Command
     protected $options = [];
     
     
+    
     protected function configure()
     {
         $this->fileSystem = new Filesystem();
@@ -54,7 +61,9 @@ abstract class AbstractCommand extends Command
     
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
+        $this->inputInterface = $input; // unfortunately 'input' is not available via SymfonyStyle...
         $this->io = new SymfonyStyle($input, $output);
+        
     }
     
     /**
@@ -73,7 +82,7 @@ abstract class AbstractCommand extends Command
         parent::addOption(
             $name,
             null,
-            in_array($validation, [null, 'optional']) ? InputOption::VALUE_OPTIONAL : InputOption::VALUE_REQUIRED,
+            InputOption::VALUE_REQUIRED, // This indicates, whether the option may be set without value (i.e. boolean)
             $description,
             $default
         );
@@ -90,22 +99,20 @@ abstract class AbstractCommand extends Command
     
     /**
      * Goes through all options and validates each
-     * 
-     * @param InputInterface $input
      */
-    protected function validateAllOptions(InputInterface $input)
+    protected function validateAllOptions()
     {       
        /** @var InputOption $option */
        foreach($this->options as $optionName => $optionDefinition) {
-           $optionNeedsValidation = $this->optionNeedsValidation($optionName, $input);
+           $optionNeedsValidation = $this->optionNeedsValidation($optionName);
            
-           while ($optionNeedsValidation && !$this->optionIsValid($optionName, $input)) {
+           while ($optionNeedsValidation && !$this->optionIsValid($optionName)) {
                
                if ($optionDefinition['validationRound'] > 1) {
                    $this->outputErrorForOption($optionName);
                }
                
-               $this->letUserSetOption($optionName, $input);
+               $this->letUserSetOption($optionName);
                
                $optionDefinition['validationRound']++;
                $this->options[$optionName]['validationRound']++;
@@ -118,10 +125,9 @@ abstract class AbstractCommand extends Command
      * Checks whether an option needs validation
      * 
      * @param string $optionName
-     * @param InputInterface $input
      * @return boolean
      */
-    protected function optionNeedsValidation($optionName, InputInterface $input)
+    protected function optionNeedsValidation($optionName)
     {
         $optionDefinition = $this->options[$optionName];
         $needsValidation = true;
@@ -129,10 +135,9 @@ abstract class AbstractCommand extends Command
         if ($optionDefinition['validation'] === false) {
             $needsValidation = false;
         }
-        
         if ($optionDefinition['onlyValidateIfOptionSet'] !== null && $optionDefinition['onlyValidateIfOptionSet'] !== false) {
             $otherOptionName = $optionDefinition['onlyValidateIfOptionSet'];
-            $otherOptionValue = $input->getOption($otherOptionName);
+            $otherOptionValue = $this->inputInterface->getOption($otherOptionName);
             $otherOptionDefault = $this->options[$otherOptionName]['default'];
             if ($otherOptionValue === $otherOptionDefault || empty($otherOptionValue)) {
                 $needsValidation = false;
@@ -147,13 +152,12 @@ abstract class AbstractCommand extends Command
      * Validates one single option value
      * 
      * @param string $optionName
-     * @param InputInterface $input
      * @return boolean
      */
-    protected function optionIsValid($optionName, InputInterface $input)
+    protected function optionIsValid($optionName)
     {
         $optionDefinition = $this->options[$optionName];
-        $optionValue = $input->getOption($optionName);
+        $optionValue = $this->inputInterface->getOption($optionName);
         
         $isDefaultValue = ($optionValue === $optionDefinition['default']);
         $needsAnyValue = ($optionDefinition['validation'] === true);
@@ -194,14 +198,24 @@ abstract class AbstractCommand extends Command
         if (count($optionDefinition['choices']) > 0) {
             $this->io->error('Please choose one of the options below!');
         } elseif ($optionDefinition['validation'] === true) {
-            $this->io->error(sprintf('The option %s can\'t be empty!', $optionName));
+            $this->io->error(sprintf('The value for "%s" can\'t be empty!', $optionName));
         } else {
-            $this->io->error(sprintf('The option %s doesn\'t match the pattern "%s"!', $optionName, $optionDefinition['validation']));
+            $patternMismatchErrorMessage = 'The value for "%s" isn\'t valid. Please check it.';
+            if ($optionDefinition['validationRound'] > 2) {
+                $patternMismatchErrorMessage = 'Aw, not again! See, the value for "%s" must match the pattern "%s"!';
+            }
+            $this->io->error(sprintf($patternMismatchErrorMessage, $optionName, $optionDefinition['validation']));
         }
     }
     
     
-    protected function letUserSetOption($optionName, InputInterface $input)
+    /**
+     * Lets the user (re-)set a specific option as defined by
+     * 'addValidatableOption'
+     * 
+     * @param string $optionName
+     */
+    protected function letUserSetOption($optionName)
     {
         $optionDefinition = $this->options[$optionName];
         if (count($optionDefinition['choices'])) {
@@ -214,8 +228,36 @@ abstract class AbstractCommand extends Command
             );
         }
         
-        $input->setOption($optionName, $newValue);
+        $this->inputInterface->setOption($optionName, $newValue);
     }
     
+    
+    /**
+     * Asks the user, whether he/she likes to continue in the
+     * process and auto-quits if chosen 'no' (overridable).
+     * 
+     * @param string $reasonWhyProcessStopped
+     * @param bool $abortIfUserDecidesToQuit
+     * @return bool
+     */
+    protected function letUserDecideOnContinuing($reasonWhyProcessStopped = '', $abortIfUserDecidesToQuit = true)
+    {
+        $reasonWhyProcessStopped .= ' Continue anyway?';
+        if ($abortIfUserDecidesToQuit) {
+            $reasonWhyProcessStopped .= ' Choosing "no" will stop the whole process.';
+        }
+        $continue = $this->io->confirm(
+            trim($reasonWhyProcessStopped),
+            false
+        );
+        
+        if (!$continue && $abortIfUserDecidesToQuit) {
+            $this->io->warning('Aborting...');
+            exit();
+        }
+        
+        return $continue;
+        
+    }
     
 }

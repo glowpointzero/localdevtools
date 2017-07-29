@@ -41,12 +41,14 @@ class SetupCommand extends AbstractCommand
             $symlinkPath = $this->io->ask(
                 sprintf(
                     'Would you like to create a symlink to your project roots path'
-                        . '(%s) for easier access? If so, provide a path here',
+                        . ' (%s)'
+                        . 'for easier access? If so, provide a path here',
                     $this->localConfiguration->get('projectsRootPath')
                 ),
-                \Symfony\Component\Console\Input\InputArgument::OPTIONAL
+                null,
+                function($userInput) { return $userInput; }
             );
-            if ($symlinkPath) {
+            if (trim($symlinkPath)) {
                 $this->fileSystem->symlink($this->localConfiguration->get('projectsRootPath'), $symlinkPath);
             }
         }

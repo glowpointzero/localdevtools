@@ -14,19 +14,22 @@ class LocalConfiguration
     
     const CONFIGURATION_DIRECTORY = '.localdevtools'; // ... under user home
     const CONFIGURATION_FILE_NAME = 'config';
-      
+    const DEFAULT_TEMPLATE_ROOT_PATH = 'Templates';
+    
     var $isLoaded = false;
     var $configuration = [
         'hostConfigurationFilesRootPath' => '',
+        'hostConfigurationTemplatesRootPath' => '',
         'projectsRootPath' => '',
         'hostsFilePath' => '',
         'serverRestartCommand' => ''
     ];
     const CONFIGURATION_PARAMETERS_DESCRIPTIONS = [
         'hostConfigurationFilesRootPath' => 'Directory path of your virtual host *.conf files.',
+        'hostConfigurationTemplatesRootPath' => 'Directory path of your virtual host template files.',
         'projectsRootPath' => 'Directory, where all your webprojects will be created.',
         'hostsFilePath' => 'Path to your hosts file.',
-        'serverRestartCommand' => 'Command to restart your webserver with',
+        'serverRestartCommand' => 'Command to restart your local webserver with',
     ];
     
     
@@ -36,6 +39,10 @@ class LocalConfiguration
     public function __construct(Filesystem $fileSystem)
     {
         $this->fileSystem = $fileSystem;
+        $this->configuration['hostConfigurationTemplatesRootPath'] = 
+            LOCAL_DEV_TOOLS_ROOT 
+            . DIRECTORY_SEPARATOR 
+            . self::DEFAULT_TEMPLATE_ROOT_PATH;
     }
     
     

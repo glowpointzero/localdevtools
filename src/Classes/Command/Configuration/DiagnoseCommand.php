@@ -39,7 +39,7 @@ class DiagnoseCommand extends AbstractCommand
                     . '   %s '. PHP_EOL . PHP_EOL
                     . 'to your httpd-vhosts.conf!',
                 $this->localConfiguration->get('hostsFilePath'),
-                'Include "'. $this->localConfiguration->get('hostsFilePath') .'/*.conf"'
+                'Include "'. $this->localConfiguration->get('hostsFilePath') . DIRECTORY_SEPARATOR . '*.conf"'
             )
         );
         

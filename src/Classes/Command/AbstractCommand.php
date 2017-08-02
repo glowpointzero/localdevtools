@@ -6,9 +6,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Filesystem\Filesystem;
 
 use GlowPointZero\LocalDevTools\LocalConfiguration;
+use GlowPointZero\LocalDevTools\Component\Filesystem;
 
 abstract class AbstractCommand extends Command
 {
@@ -57,7 +57,16 @@ abstract class AbstractCommand extends Command
             ->setName($this::COMMAND_NAME)
             ->setDescription($this::COMMAND_DESCRIPTION)
         ;
+        
+        // @todo
+        $this->addOption(
+            'alwaysUseDefaults',
+            '',
+            \Symfony\Component\Console\Input\InputOption::VALUE_NONE,
+            'If set, will skip asking for options that have a valid default value'
+        );
     }
+    
     
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
@@ -162,27 +171,26 @@ abstract class AbstractCommand extends Command
         $isDefaultValue = ($optionValue === $optionDefinition['default']);
         $needsAnyValue = ($optionDefinition['validation'] === true);
         $isEmpty = empty($optionValue);
-        $isOptional = ($optionDefinition['validation'] === 'optional');
         $isAtLeastSecondValidationRound = ($optionDefinition['validationRound'] > 1);
         
-        if ($needsAnyValue && $isEmpty) {
-            return false;
-        } elseif ($isEmpty && $isOptional && $isAtLeastSecondValidationRound) {
-            return true;
-        } elseif($isEmpty && $isOptional && !$isAtLeastSecondValidationRound) {
-            return false;
-        } elseif($isDefaultValue && !$isAtLeastSecondValidationRound) {
-            return false;
-        } elseif($isDefaultValue && $isAtLeastSecondValidationRound) {
-            return true;
+        if (substr($optionDefinition['validation'], 0, 1) === '/') {
+            $hasRegex = true;
+            $regexMatches = preg_match($optionDefinition['validation'], $optionValue);
+        } else {
+            $hasRegex = false;
         }
         
-        if ($needsAnyValue && !$isEmpty) {
-            return true;
-        } elseif (preg_match($optionDefinition['validation'], $optionValue)) {
-            return true;
+        if (($isEmpty || $isDefaultValue) && !$isAtLeastSecondValidationRound) {
+            return false;
         }
         
+        if (!$isEmpty && $needsAnyValue) {
+            return true;
+        }
+        if ($hasRegex && $regexMatches) {
+            return true;
+        }
+                
         return false;
     }
     
@@ -221,13 +229,22 @@ abstract class AbstractCommand extends Command
         if (count($optionDefinition['choices'])) {
             $newValue = $this->io->choice($optionDefinition['description'], $optionDefinition['choices']);
         } else {
-            $newValue = $this->io->ask(
-                $optionDefinition['description'],
-                $optionDefinition['default'],
-                function($inputValue) { return $inputValue; }
-            );
+            if (preg_match('/passw/i', $optionName)) {
+                $newValue = $this->io->askHidden(
+                    $optionDefinition['description'],
+                    function($inputValue) { return $inputValue; }
+                );
+            } else {
+                $newValue = $this->io->ask(
+                    $optionDefinition['description'],
+                    $optionDefinition['default'],
+                    function($inputValue) { return $inputValue; }
+                );
+             }
         }
-        
+        if ($newValue === null) {
+            $newValue = '';
+        }
         $this->inputInterface->setOption($optionName, $newValue);
     }
     

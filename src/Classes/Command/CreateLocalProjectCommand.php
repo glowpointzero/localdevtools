@@ -3,14 +3,23 @@ namespace GlowPointZero\LocalDevTools\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Process\Process;
 
+
+/**
+ * Creates all needed directories, files, etc.
+ * to get started with a new project. Provides
+ * option to clone & composer install an existing
+ * project directly.
+ */
 class CreateLocalProjectCommand extends AbstractCommand
 {
     
     const COMMAND_NAME = 'createlocalproject';
     const COMMAND_DESCRIPTION = 'Sets up a new project on your local machine.';
     
-    const GIT_REPOSITORY_CLONE_TARGETS = ['projectRoot', 'documentRoot'];
+    const GIT_REPOSITORY_CLONE_TARGETS = ['Project files root directory', 'Document root'];
     const COMPOSER_ACTIONS_AFTER_GIT_CLONE = ['none', 'install', 'update'];  
     const LOGS_DIRECTORY = 'logs';
     
@@ -39,7 +48,7 @@ class CreateLocalProjectCommand extends AbstractCommand
             'Additional domains (space-separated)',
             null,
             null,
-            'optional'
+            '/^.*$/'
         );
         
         $this->addValidatableOption(
@@ -72,6 +81,14 @@ class CreateLocalProjectCommand extends AbstractCommand
             'gitRepository'
         );
         $this->addValidatableOption(
+            'gitRepositoryBranch',
+            'Branch name to check out initially?',
+            null,
+            null,
+            true,
+            'gitRepository'
+        );
+        $this->addValidatableOption(
             'composerActionAfterGitClone',
             'Composer action to take after git clone',
             null,
@@ -91,10 +108,22 @@ class CreateLocalProjectCommand extends AbstractCommand
         $this->localConfiguration->validate();
         
         $this->validateAllOptions();
-        $this->createDirectories();      
-        if ($this->createAndWriteVhostConfiguration()) {
-             $this->getApplication()->find(Server\RestartCommand::COMMAND_NAME)->run($input, $output);
+        $this->createDirectories();
+
+        if ($this->createVhostConfiguration()) {
+             $this->getApplication()
+                ->find(Server\RestartCommand::COMMAND_NAME)
+                ->run(new ArrayInput([]), $output);
         }
+        
+        if ($this->inputInterface->getOption('gitRepository')) {
+            $gitCloned = $this->cloneGit();
+            if ($gitCloned) {
+                $this->runComposerActions();
+            }
+        }
+        
+        $this->io->success('DONE creating local project!');
     }
     
     
@@ -105,10 +134,7 @@ class CreateLocalProjectCommand extends AbstractCommand
     protected function createDirectories()
     {
         // Project root directory
-        $projectRoot =
-            $this->localConfiguration->get('projectsRootPath')
-            . DIRECTORY_SEPARATOR
-            . $this->inputInterface->getOption('projectKey');
+        $projectRoot = $this->getProjectRootDirectory();
         
         $this->io->write(sprintf(' Creating project root directory %s ... ', $projectRoot));
         if ($this->fileSystem->exists($projectRoot)) {
@@ -126,10 +152,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         
         // Project files subdirectory (containing code most likely to be
         // versioned, excluding logs, etc.)
-        $projectFilesRoot = 
-                $projectRoot 
-                . DIRECTORY_SEPARATOR 
-                . $this->inputInterface->getOption('projectFilesRootDirectoryName');
+        $projectFilesRoot = $this->getProjectFilesRootDirectory();
         
         $this->io->write(sprintf(' Creating project files root directory %s ... ', $projectFilesRoot));
     
@@ -164,10 +187,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         }
         
         // Document root directory a.k.a. "public html"
-        $documentRoot =
-                $projectFilesRoot 
-                . DIRECTORY_SEPARATOR 
-                . $this->inputInterface->getOption('documentRootDirectoryName');
+        $documentRoot = $this->getDocumentRootDirectory();
         $this->additionalVhostPlaceholders['documentRoot'] = $documentRoot;
         $this->io->write(sprintf(' Creating public html directory %s ... ', $documentRoot));
 
@@ -185,12 +205,34 @@ class CreateLocalProjectCommand extends AbstractCommand
     }
     
     
+    protected function getProjectRootDirectory()
+    {
+        return $this->localConfiguration->get('projectsRootPath')
+            . DIRECTORY_SEPARATOR
+            . $this->inputInterface->getOption('projectKey');
+    }
+    
+    protected function getProjectFilesRootDirectory()
+    {
+        return $this->getProjectRootDirectory() 
+            . DIRECTORY_SEPARATOR 
+            . $this->inputInterface->getOption('projectFilesRootDirectoryName');
+    }
+    
+    protected function getDocumentRootDirectory()
+    {
+        return $this->getProjectFilesRootDirectory() 
+            . DIRECTORY_SEPARATOR 
+            . $this->inputInterface->getOption('documentRootDirectoryName');
+    }
+    
+    
     /**
      * Lets user create/save a vhost configuration file off a template
      * 
      * @return boolean
      */
-    protected function createAndWriteVhostConfiguration()
+    protected function createVhostConfiguration()
     {
         $templateRootPath = $this->localConfiguration->get('hostConfigurationTemplatesRootPath');
         
@@ -235,7 +277,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         $written = false;
         try {
             $this->fileSystem->appendToFile($vhostConfigurationPath, $templateContents);
-            $this->io->write(' <info>ok!</info>');
+            $this->io->write(' <info>ok!</info>', true);
             $written = true;
         } catch (\Exception $exception) {
             $this->io->error($exception->getMessage());
@@ -257,20 +299,14 @@ class CreateLocalProjectCommand extends AbstractCommand
         $templateName = '';
         
         while (empty($templateName)) {
-            $files = scandir($templateRootPath);
-            $files = array_filter(
-                $files,
-                function ($fileName) {
-                    if (substr($fileName, -5) === '.tmpl') {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
+            $files = $this->fileSystem->getFilesInDirectory(
+                $templatesRootPath,
+                '/^.*\.tmpl$/',
+                ['files']
             );
-            $files = array_values($files); // reset indexes, in case any files have been skipped
+            
             if (count($files) === 0) {
-                $this->io->error(sprintf('No templates found in %s.', $templateRootPath));
+                $this->io->error(sprintf('No templates found in %s.', $templatesRootPath));
                 $options = [
                     'Try again',
                     'Skip this (do it manually later)'
@@ -285,12 +321,97 @@ class CreateLocalProjectCommand extends AbstractCommand
                 }
                 
             } else {
-                $templateName = $this->io->choice(sprintf('Choose a file from %s', $templateRootPath), $files);
+                $templateName = $this->io->choice(sprintf('Choose a file from %s', $templatesRootPath), $files);
             }            
         }
         
-        $templateContents = file_get_contents($templateRootPath . DIRECTORY_SEPARATOR . $templateName);
+        $templateContents = file_get_contents($templatesRootPath . DIRECTORY_SEPARATOR . $templateName);
         
         return $templateContents;
+    }
+    
+    
+    /**
+     * Clones git repository set via option ('gitRepository') into
+     * gitRepositoryCloneTarget (including branch).
+     */
+    protected function cloneGit()
+    {
+        $gitRepository = $this->inputInterface->getOption('gitRepository');
+        $targetDirectory = array_search(
+            $this->inputInterface->getOption('gitRepositoryCloneTarget'),
+            self::GIT_REPOSITORY_CLONE_TARGETS
+        );
+        if ($targetDirectory === 0) {
+            $targetDirectoryPath = $this->getProjectFilesRootDirectory();
+        } else {
+            $targetDirectoryPath = $this->getDocumentRootDirectory();
+        }
+        
+        // Remove document root directory, if it's the only file existing in the
+        // clone target, as we don't want to trigger a Git clone abort in this case.
+        $filesInDestination = $this->fileSystem->getFilesInDirectory($targetDirectoryPath);
+        if (count($filesInDestination) === 1) {
+            $firstFilePath = $targetDirectoryPath . DIRECTORY_SEPARATOR . $filesInDestination[0];
+
+            if (
+                $firstFilePath === $this->getDocumentRootDirectory() 
+                && count($this->fileSystem->getFilesInDirectory($firstFilePath)) === 0) {
+
+                $this->fileSystem->remove($firstFilePath);
+            }
+        }
+        
+        $gitBranch = $this->inputInterface->getOption('gitRepositoryBranch');
+        
+        $this->io->write(sprintf(' Cloning %s ... ', $gitRepository));
+        $cloneProcess = new Process(
+            sprintf(
+                'git clone%s "%s" "%s"',
+                $gitBranch ? ' -b '. $gitBranch : '',
+                $gitRepository,
+                $targetDirectoryPath
+            )
+        );
+        $cloneProcess->run();
+        if ($cloneProcess->isSuccessful()) {
+            $this->io->write('<info>ok!</info>', true);
+        } else {
+            $this->io->error($cloneProcess->getErrorOutput());
+        }
+    }
+    
+    /**
+     * Runs composer action according to option 'composerAction'
+     * 
+     * @return boolean
+     */
+    protected function runComposerActions()
+    {
+        $composerAction = array_search(
+            $this->inputInterface->getOption('composerAction'),
+            self::COMPOSER_ACTIONS_AFTER_GIT_CLONE
+        );
+        
+        if ($composerAction === 0) {
+            return true;
+        }     
+        $composerCommand = sprintf(
+            'composer %s',
+            $composerAction > 1 ? 'update' : 'install'
+        );
+        
+        $this->io->write(sprintf(' Running %s ... ', $composerCommand));
+
+        $composerProcess = new Process($composerCommand);
+        $composerProcess->run();
+        
+        if ($composerProcess->isSuccessful()) {
+            $this->io->write('<info>ok!</info>', true);
+            return true;
+        } else {
+            $this->io->error($composerProcess->getErrorOutput());
+            return false;
+        }
     }
 }

@@ -3,6 +3,17 @@ namespace GlowPointZero\LocalDevTools\Component;
 
 class Filesystem extends \Symfony\Component\Filesystem\Filesystem
 {
+    /**
+     * Holds paths to all temporary files created at runtime
+     * 
+     * @var array
+     */
+    var $temporaryFiles = [];
+    
+    public function __destruct()
+    {
+        $this->remove($this->temporaryFiles);
+    }
     
     /**
      * Gets the file (list) out of any given directory.
@@ -54,6 +65,26 @@ class Filesystem extends \Symfony\Component\Filesystem\Filesystem
         $files = array_values($files);
         
         return $files;
-        
+    }
+    
+    
+    /**
+     * @return string
+     */
+    public function getUserHome()
+    {
+        return rtrim(getenv("HOME"), '/\\');
+    }
+    
+    /**
+     * Creates a new, temporary file
+     * 
+     * @return type
+     */
+    public function createTemporaryFile()
+    {
+        $tempFilePath = $this->tempnam(sys_get_temp_dir(), 'localdevtools-');
+        $this->temporaryFiles[] = $tempFilePath;
+        return $tempFilePath;
     }
 }

@@ -102,13 +102,26 @@ class CopyFromRemoteCommand extends AbstractCommand
         if (!$this->remoteDbIsAccessible()) {
             return;
         }
+        $remoteDbDumpPath = $this->createDbDump('remote');
+        $this->io->success($remoteDbDumpPath);
         
+        if ($this->localDbExists()) {
+            $localDbDumpPath = $this->createDbDump('local');
+            $this->io->success($localDbDumpPath);
+        }
+        
+        $this->io->writeln('Done');
     }
     
     
+    /**
+     * Checks whether the remote database is accessible
+     * 
+     * @return boolean
+     */
     protected function remoteDbIsAccessible()
     {
-        $process = $this->processDbCommand('remote', 'SHOW TABLES');
+        $process = $this->processDbCommand('remote', 'mysql', ['SHOW TABLES']);
         if ($process->getExitCode() !== 0) {
             $this->io->error($process->getErrorOutput());
             return false;
@@ -117,29 +130,107 @@ class CopyFromRemoteCommand extends AbstractCommand
         }
     }
     
+    protected function localDbExists()
+    {
+        $process = $this->processDbCommand('local', 'mysql', ['SHOW DATABASES']);
+
+        if ($process->getExitCode() !== 0) {
+            $errorMessage = $process->getErrorOutput();
+            $this->io->error($process->getExitCodeText());
+            return 0;
+        } else {
+            
+            $databaseNamePattern = sprintf('/\n%s\s/', $this->inputInterface->getOption('localDatabaseName'));
+            return preg_match($databaseNamePattern, $process->getOutput());
+            
+        }
+    }
+    
+    
     /**
      * Runs a command on the local or remote db
      * 
-     * @param type $db
-     * @param type $dbCommand
-     * @param type $wrapper
+     * @param string $db              'local' or 'remote'
+     * @param string $commandType      Command to execute, either mysql or mysqldump
+     * @param array  $commandArguments Special arguments to be used by the command
      * @return Process
      */
-    protected function processDbCommand($db='local', $dbCommand, $wrapper = '')
+    protected function processDbCommand($db='local', $commandType, $commandArguments = [])
     {
-        $command = 'mysql --host=%s --database=%s --user=%s --password="%s" --execute="%s" %s';
-        $connectionProcess = new Process(
+        
+        if (!in_array($commandType, ['mysql', 'mysqldump'])) {
+            throw new \Exception(sprintf('Command type "%s" is not allowed.', $commandType));
+        }
+        
+        $defaultsFileOption = $this->fileSystem->createTemporaryFile();
+        $this->fileSystem->appendToFile(
+            $defaultsFileOption,
             sprintf(
-                $command,
-                $this->inputInterface->getOption($db . 'Host'),
-                $this->inputInterface->getOption($db . 'DatabaseName'),
-                $this->inputInterface->getOption($db . 'UserName'),
-                $this->inputInterface->getOption($db . 'Password'),
-                $dbCommand,
-                $wrapper
+                '[client]%spassword="%s"',
+                PHP_EOL,
+                $this->inputInterface->getOption($db . 'Password')
             )
         );
+        
+        $databaseName = $this->inputInterface->getOption($db . 'DatabaseName');
+        $databaseOption = sprintf(
+            '--database="%s"',
+            $databaseName
+        );
+        
+        
+        $commandLine = sprintf(
+            '%s --defaults-file="%s" --host="%s" %s --user="%s" %s"%s"',
+            $commandType,
+            $defaultsFileOption,
+            $this->inputInterface->getOption($db . 'Host'),
+            (preg_match('/SHOW DATABASE/i', $commandArguments[0]) || $commandType === 'mysqldump') ? '' : $databaseOption,
+            $this->inputInterface->getOption($db . 'UserName'),
+            $commandType === 'mysqldump' ? '"' . $databaseName . '" > ' : '--execute=',
+            $commandArguments[0]
+        );
+        $this->io->comment($commandLine);
+        $connectionProcess = new Process($commandLine);
         $connectionProcess->run();
         return $connectionProcess;
+    }
+    
+    
+    /**
+     * Dumps DB to a local file and returns path.
+     * 
+     * @var string $db 'local' or 'remote'
+     * @return boolean|string
+     */
+    protected function createDbDump($db = 'local')
+    {
+        $dumpPath = 
+            $this->fileSystem->getUserHome()
+            . DIRECTORY_SEPARATOR
+            . 'dumps';
+        
+        $this->fileSystem->mkdir($dumpPath);
+        
+        $dumpName =
+            $this->inputInterface->getOption($db . 'DatabaseName')
+            . '--' . $this->inputInterface->getOption($db . 'Host')
+            . '--' . date('Y-m-d--H-i-s')
+            . '.sql';
+        
+        $dumpAbsPath = $dumpPath . DIRECTORY_SEPARATOR . $dumpName;
+                
+        $process = $this->processDbCommand(
+            $db,
+            'mysqldump',
+            [$dumpAbsPath]
+        );
+        
+        if ($process->getExitCode() === 0) {
+            return $dumpAbsPath;
+        } else {
+            $this->io->error($process->getErrorOutput());
+            return false;
+        }
+        
     }
 }

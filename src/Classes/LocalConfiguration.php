@@ -115,7 +115,7 @@ class LocalConfiguration
      */
     public function getConfigurationFilePathAbs()
     {
-        $homeDirectory = rtrim(getenv("HOME"), '/\\');
+        $homeDirectory = $this->fileSystem->getUserHome();
         return $homeDirectory .'/'. self::CONFIGURATION_DIRECTORY .'/'. self::CONFIGURATION_FILE_NAME;
     }
     

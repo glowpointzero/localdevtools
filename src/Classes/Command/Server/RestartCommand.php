@@ -18,9 +18,13 @@ class RestartCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->io->processing('Restarting server');
         $restartCommand = $this->localConfiguration->get('serverRestartCommand');
         $process = new Process($restartCommand);
         $process->run();
-        echo $process->getOutput();
+        if ($process->getExitCode() !== 0) {
+            throw new \Exception($process->getErrorOutput(), 1502040768);
+        }
+        $this->io->ok();
     }
 }

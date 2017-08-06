@@ -60,40 +60,40 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        
-        $remoteDbIsAccessible = $this->remoteDbIsAccessible($remoteDbAccessErrors);
-        if ($remoteDbIsAccessible !== true) {
-            $this->io->error($remoteDbAccessErrors);
+        $localDbName = $this->inputInterface->getOption('localDatabaseName');
+            
+        try {
+            $this->remoteDbIsAccessible();
+        } catch (\Exception $exception) {
+            $this->io->error($exception->getMessage());
             return 1;
         }
+        
         $remoteDbDumpPath = $this->createDbDump(
             $this->inputInterface->getOption('remoteHost'),
             $this->inputInterface->getOption('remoteUserName'),
             $this->inputInterface->getOption('remotePassword'),
-            $this->inputInterface->getOption('remoteDatabaseName'),
-            $dumpErrors
+            $this->inputInterface->getOption('remoteDatabaseName')
         );
-        if ($remoteDbDumpPath === false) {
-            $this->io->error($dumpErrors);
-            return 1;
-        } else {
-            $this->io->text('Remote database dumped to '. $remoteDbDumpPath);
-        }
-        
-        
-        if (!$this->localDatabaseExists($this->inputInterface->getOption('localDatabaseName'))) {
+                
+        if (!$this->localDatabaseExists($localDbName)) {
+            $this->io->processing('Local database doesn\'t exist yet. Creating');
+            
             $createCommand = $this->getApplication()->find(CreateCommand::COMMAND_NAME);
             $createCommand->run(
                 new ArrayInput([
-                    '--newDatabaseName' => $this->inputInterface->getOption('localDatabaseName'),
+                    '--newDatabaseName' => $localDbName,
                     '--newUserName' => $this->inputInterface->getOption('localUserName')
                 ]),
                 $output
             );
+            if ($createCommand->hasCreatedANewUser()) {
+                $this->inputInterface->setOption('localPassword', $createCommand->getNewPassword());
+            }
         }
         
         $this->importDumpToLocalDb($remoteDbDumpPath);
-        
+
     }
     
     
@@ -102,23 +102,34 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
      * Checks whether the remote database is accessible
      * 
      * @var reference $errors
-     * @return boolean|string
+     * @throws Exception
+     * @return boolean
      */
-    protected function remoteDbIsAccessible(&$errors)
+    protected function remoteDbIsAccessible()
     {
+        $remoteHost = $this->inputInterface->getOption('remoteHost');
+        $remoteUserName = $this->inputInterface->getOption('remoteUserName');
+        
+        $this->io->processing(
+            sprintf(
+                'Checking remote db access (%s@%s)',
+                $remoteUserName,
+                $remoteHost
+            )
+        );
         $process = $this->processDbCommand(
             $this->inputInterface->getOption('remoteHost'),
-            $this->inputInterface->getOption('remoteUserName'),
+            $remoteUserName,
             $this->inputInterface->getOption('remotePassword'),
             null,
             '"SHOW TABLES FROM '. $this->inputInterface->getOption('remoteDatabaseName') . '"'
         );
         if ($process->getExitCode() !== 0) {
-            $errors = $process->getErrorOutput();
-            return false;
-        } else {
-            return true;
+            throw new \Exception($process->getErrorOutput(), 1502039256);
         }
+        
+        $this->io->ok();
+        return true;
     }
     
 }

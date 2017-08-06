@@ -63,21 +63,12 @@ class DumpCommand extends AbstractDatabaseCommand
     public function execute(InputInterface $input, OutputInterface $output)
     {
         
-        $dbDumpPath = $this->createDbDump(
+        $this->createDbDump(
             $this->inputInterface->getOption('host'),
             $this->inputInterface->getOption('userName'),
             $this->inputInterface->getOption('password'),
-            $this->inputInterface->getOption('databaseName'),
-            $dumpErrors
-        );
-        
-        if ($dbDumpPath === false) {
-            $this->io->error($dumpErrors);
-            return 1;
-        } else {
-            $this->io->ok('Local database backup dumped to '. $dbDumpPath, false);
-            return 0;
-        }
+            $this->inputInterface->getOption('databaseName')
+        );        
     }
         
     

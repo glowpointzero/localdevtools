@@ -56,14 +56,14 @@ class CreateLocalProjectCommand extends AbstractCommand
             'Project files root directory name (will reside in the project root directory along with the "logs" directory, for example)',
             'web',
             null,
-            '/^[0-9a-z\-]{3,}$/i'
+            '/^[0-9a-z\-_]{3,}$/i'
         );
         $this->addValidatableOption(
             'documentRootDirectoryName',
             'Document root directory name',
             'public_html',
             null,
-            '/^[0-9a-z\-]{3,}$/i'
+            '/^[0-9a-z\-_]{3,}$/i'
         );
         $this->addValidatableOption(
             'gitRepository',
@@ -104,18 +104,53 @@ class CreateLocalProjectCommand extends AbstractCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->io->section('File system');
         $this->createDirectories();
 
-        if ($this->createVhostConfiguration()) {
-             $this->getApplication()
-                ->find(Server\RestartCommand::COMMAND_NAME)
-                ->run(new ArrayInput([]), $output);
+        $this->io->section('Server');
+        $this->createVhostConfiguration();
+        $this->getApplication()
+            ->find(Server\RestartCommand::COMMAND_NAME)
+            ->run(new ArrayInput([]), $output);
+        
+        $this->extendHostsFile();
+        
+        $this->io->section('Database');
+        $doneHandlingDatabases = false;
+        while (!$doneHandlingDatabases) {
+            $copyDbFromRemote = $this->io->confirm('Copy existing database from remote server?');
+            try {
+                if ($copyDbFromRemote) {
+                    $copyFromRemoteCommand = $this->getApplication()->find(Database\CopyFromRemoteCommand::COMMAND_NAME);
+                    $copyFromRemoteCommand->run(new ArrayInput([]), $output);
+                } else {
+                    $createLocalDb = $this->io->confirm('Create local database?');
+                    $createLocalCommand = $this->getApplication()->find(Database\CreateCommand::COMMAND_NAME);
+                    $createLocalCommand->run(new ArrayInput([]), $output);
+                }
+                
+                $doneHandlingDatabases = true;
+                
+            } catch (\Exception $exception) {
+                $this->io->error($exception->getMessage());
+                $doneHandlingDatabases = !$this->io->confirm('It seems like this didn\'t go as planned. Try again?');
+            }
         }
         
+        
+        $this->io->section('Git & Composer');
         if ($this->inputInterface->getOption('gitRepository')) {
             $gitCloned = $this->cloneGit();
             if ($gitCloned) {
-                $this->runComposerActions();
+                try {
+                    $this->runComposerActions();
+                } catch (Exception $ex) {
+                    $this->io->error(
+                        'Composer failed somehow. This script will now terminate.'
+                        . ' Run the composer command again, once you looked into it.'
+                    );
+                }
+                
             }
         }
         
@@ -132,11 +167,10 @@ class CreateLocalProjectCommand extends AbstractCommand
         // Project root directory
         $projectRoot = $this->getProjectRootDirectory();
         
-        $this->io->write(sprintf(' Creating project root directory %s ... ', $projectRoot));
+        $this->io->processing(sprintf('Creating project root directory %s', $projectRoot));
         if ($this->fileSystem->exists($projectRoot)) {
             $this->io->warning('This directory already exists.');
             $this->letUserDecideOnContinuing();
-            $this->io->write(' ');
         }
         try {
             $this->fileSystem->mkdir($projectRoot);
@@ -150,10 +184,10 @@ class CreateLocalProjectCommand extends AbstractCommand
         // versioned, excluding logs, etc.)
         $projectFilesRoot = $this->getProjectFilesRootDirectory();
         
-        $this->io->write(sprintf(' Creating project files root directory %s ... ', $projectFilesRoot));
+        $this->io->processing(sprintf('Creating project files root directory %s', $projectFilesRoot));
     
         if ($this->fileSystem->exists($projectFilesRoot)) {
-            $this->io->ok('exists. Ok!');
+            $this->io->ok('already exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($projectFilesRoot);
@@ -168,10 +202,10 @@ class CreateLocalProjectCommand extends AbstractCommand
         $logsDirectory = $projectRoot . DIRECTORY_SEPARATOR . self::LOGS_DIRECTORY;
         $this->additionalVhostPlaceholders['logsDirectory'] = $logsDirectory;
         
-        $this->io->write(sprintf(' Creating logs directory %s ... ', $logsDirectory));
+        $this->io->processing(sprintf('Creating logs directory %s', $logsDirectory));
 
         if ($this->fileSystem->exists($logsDirectory)) {
-            $this->io->ok('exists. Ok!');
+            $this->io->ok('already exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($logsDirectory);
@@ -185,10 +219,10 @@ class CreateLocalProjectCommand extends AbstractCommand
         // Document root directory a.k.a. "public html"
         $documentRoot = $this->getDocumentRootDirectory();
         $this->additionalVhostPlaceholders['documentRoot'] = $documentRoot;
-        $this->io->write(sprintf(' Creating public html directory %s ... ', $documentRoot));
+        $this->io->processing(sprintf('Creating public html directory %s', $documentRoot));
 
         if ($this->fileSystem->exists($documentRoot)) {
-            $this->io->ok('exists. Ok!');
+            $this->io->ok('already exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($documentRoot);
@@ -226,7 +260,8 @@ class CreateLocalProjectCommand extends AbstractCommand
     /**
      * Lets user create/save a vhost configuration file off a template
      * 
-     * @return boolean
+     * @throws Exception
+     * @return void
      */
     protected function createVhostConfiguration()
     {
@@ -237,11 +272,12 @@ class CreateLocalProjectCommand extends AbstractCommand
         }
         
         $templateRootPath = trim($templateRootPath, ' '. DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'Server';
-        
         $templateContents = $this->chooseAndLoadTemplate($templateRootPath);
+        
+        $this->io->text(sprintf('Creating vhost configuration based on the template found under "%s"', $templateRootPath));
+        
         if ($templateContents === false) {
-            $this->io->warning('Skipping server configuration setup.');
-            return false;
+            throw new \Exception(sprintf('Could not load contents from "%s".', $templateRootPath), 1502041243);
         }
         
         // Load server configuration template and replace placeholders
@@ -265,22 +301,46 @@ class CreateLocalProjectCommand extends AbstractCommand
             . DIRECTORY_SEPARATOR
             . $this->inputInterface->getOption('projectKey') . '.conf';
         
-        $this->io->write(sprintf(' Writing vhost configuration to %s ...', $vhostConfigurationPath));
         if (file_exists($vhostConfigurationPath)) {
             $this->io->warning(sprintf('The vhost target file exists, configuration will be added to this file.'));
+            $templateContents = PHP_EOL . PHP_EOL . $templateContents;
         }
+        $this->io->processing(sprintf('Writing vhost configuration to "%s"', $vhostConfigurationPath));
         
-        $written = false;
-        try {
-            $this->fileSystem->appendToFile($vhostConfigurationPath, $templateContents);
-            $this->io->ok();
-            $written = true;
-        } catch (\Exception $exception) {
-            $this->io->error($exception->getMessage());
-        }
-        
-        return $written;
+        $this->fileSystem->appendToFile($vhostConfigurationPath, $templateContents);
+        $this->io->ok();
     }
+    
+    
+    /**
+     * Extends 
+     * @throws \Exception
+     */
+    protected function extendHostsFile()
+    {
+        $hostsFilePath = $this->localConfiguration->get('hostsFilePath');
+        $this->io->processing(sprintf('Extending hosts file, appending new local domains (%s)', $hostsFilePath));
+
+        if (!@is_file($hostsFilePath)) {
+            throw new \Exception(sprintf('The hosts file doesn\'t exist under the given path ("%s")!', $hostsFilePath), 1502042022);
+        }
+        $projectKey = $this->inputInterface->getOption('projectKey');
+        $newDomainsString = str_replace(
+            '((((projectKey))))',
+            $projectKey,
+            PHP_EOL
+                . sprintf('Inserted on %s by %s', date('Y-m-d H:m:s'), __FILE__)
+                . PHP_EOL
+                .'127.0.0.1     '
+                . $this->localConfiguration->get('hostsFileDomainPattern')
+                . ' '. $this->inputInterface->getOption('additionalDomains')
+        );
+        
+        file_put_contents($hostsFilePath, $newDomainsString, FILE_APPEND);
+        
+        $this->io->ok();
+    }
+    
     
     
     /**
@@ -360,7 +420,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         
         $gitBranch = $this->inputInterface->getOption('gitRepositoryBranch');
         
-        $this->io->write(sprintf(' Cloning %s ... ', $gitRepository));
+        $this->io->processing(sprintf('Cloning %s', $gitRepository));
         $cloneProcess = new Process(
             sprintf(
                 'git clone%s "%s" "%s"',
@@ -370,17 +430,13 @@ class CreateLocalProjectCommand extends AbstractCommand
             )
         );
         $cloneProcess->run();
-        if ($cloneProcess->isSuccessful()) {
-            $this->io->ok();
-        } else {
-            $this->io->error($cloneProcess->getErrorOutput());
-        }
+        $this->io->ok();
     }
     
     /**
      * Runs composer action according to option 'composerAction'
      * 
-     * @return boolean
+     * @return void
      */
     protected function runComposerActions()
     {
@@ -397,17 +453,10 @@ class CreateLocalProjectCommand extends AbstractCommand
             $composerAction > 1 ? 'update' : 'install'
         );
         
-        $this->io->write(sprintf(' Running %s ... ', $composerCommand));
+        $this->io->processing(sprintf('Running %s', $composerCommand));
 
         $composerProcess = new Process($composerCommand);
         $composerProcess->run();
-        
-        if ($composerProcess->isSuccessful()) {
-            $this->io->ok();
-            return true;
-        } else {
-            $this->io->error($composerProcess->getErrorOutput());
-            return false;
-        }
+        $this->io->ok();
     }
 }

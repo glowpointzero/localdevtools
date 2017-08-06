@@ -57,28 +57,16 @@ class ImportCommand extends AbstractDatabaseCommand
         $dbName = $this->inputInterface->getOption('localDatabaseName');
         $importFilePath = $this->inputInterface->getOption('importFilePath');
 
-        
-        $dbExists = $this->localDatabaseExists($dbName, $dbExistsErrors);
-        if ($dbExistsErrors) {
-            $this->io->error('Unable to check, whether local database exists. No dump created. Import aborted.');
-            return 1;
-        }
+        $dbExists = $this->localDatabaseExists($dbName);
         
         if ($dbExists && $this->inputInterface->getOption('dumpCurrent') !== false) {
-            
+            $this->io->write('Backing up existing database...', true);
             $dbDumpPath = $this->createDbDump(
                 $this->inputInterface->getOption('localHost'),
                 $this->inputInterface->getOption('localUserName'),
                 $this->inputInterface->getOption('localUserName'),
-                $this->inputInterface->getOption('localPassword'),
-                $dumpErrors
+                $dbName
             );
-            if ($dbDumpPath === false) {
-                $this->io->error($dumpErrors);
-                return 1;
-            } else {
-                $this->io->note('Local database backup dumped to '. $dbDumpPath);
-            }
         }
         
         if ($this->inputInterface->getOption('skipConfirmation') !== true) {
@@ -95,13 +83,7 @@ class ImportCommand extends AbstractDatabaseCommand
             }
         }
         
-        if (!$this->importDumpToLocalDb($dumpFilePath, $importError)) {
-            $this->io->error($importError);
-            return 1;
-        } else {
-            return 0;
-        }
-        
+        $this->importDumpToLocalDb($importFilePath);
     }
     
 }

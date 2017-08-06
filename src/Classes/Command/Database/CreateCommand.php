@@ -21,6 +21,33 @@ class CreateCommand extends AbstractDatabaseCommand
     
     
     /**
+     * @var boolean
+     */
+    var $hasCreatedANewUser = false;
+    
+    /**
+     * @var string 
+     */
+    var $newPassword = '';
+    
+    protected function setNewPassword($password)
+    {
+        $this->newPassword = $password;
+    }
+    public function getNewPassword()
+    {
+        return $this->newPassword;
+    }
+    protected function setHasCreatedANewUser($hasCreatedANewUser)
+    {
+        $this->hasCreatedANewUser = (bool) $hasCreatedANewUser;
+    }
+    public function hasCreatedANewUser() {
+        return $this->hasCreatedANewUser;
+    }
+    
+    
+    /**
      * {@inheritdoc}
      */
     public function configure()
@@ -53,53 +80,32 @@ class CreateCommand extends AbstractDatabaseCommand
         $dbName = $this->inputInterface->getOption('newDatabaseName');
         $userName = $this->inputInterface->getOption('newUserName') ?: $dbName;
         
-        $dbExists = $this->localDatabaseExists($dbName, $dbExistsError);
-        if ($dbExistsError) {
-            $this->io->error($dbExistsError);
-            return 1;
-        } elseif ($dbExists) {
-            $this->io->text('Database exists already.');
-        } else {
-            $this->io->processing('Creating database');
-            $dbCreated = $this->createDb($dbName, $dbCreatedErrors);
-            if (!$dbCreatedErrors) {
-                $this->io->ok();
-            } else {
-                $this->io->error($dbCreatedErrors);
-                return 1;
-            }
+        $dbExists = $this->localDatabaseExists($dbName);
+        if (!$dbExists) {
+            $this->createDb($dbName);
         }
         
-        
-        $userExists = $this->localDatabaseUserExists($userName, $userExistsError);
-        if ($userExistsError) {
-            $this->io->error($userExistsError);
-            return 1;
-        } elseif ($userExists) {
+        $userExists = $this->localDatabaseUserExists($userName);
+        if ($userExists) {
             $this->io->success('Database user exists already. Please take care of access rights yourself!');
         } else {
-            $this->io->processing('Creating database user');
-            $userCreated = $this->createUser($userName, $dbName, $userCreatedErrors);
-            if (!$userCreatedErrors) {
-                $this->io->ok();
-                $this->io->success(sprintf('User/Password: %s / %s', $userName, $userCreated));
-            } else {
-                $this->io->error($userCreatedErrors);
-                return 1;
-            }
+            $userPassword = $this->createUser($userName, $dbName);
+            $this->io->ok();
+            $this->io->success(sprintf('User/Password: %s / %s', $userName, $userPassword));
         }
-        
     }
     
     /**
      * Creates a new, empty database
      * 
      * @param string $dbName
-     * @param reference $error
+     * @throws Exception
      * @return boolean
      */
-    private function createDb($dbName, &$error)
+    private function createDb($dbName)
     {
+        $this->io->processing(sprintf('Creating database "%s"', $dbName));
+        
         $process = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
             $this->inputInterface->getOption('localRootUserName'),
@@ -109,11 +115,11 @@ class CreateCommand extends AbstractDatabaseCommand
         );
 
         if ($process->getExitCode() !== 0) {
-            $error = $process->getErrorOutput();
-            return false;
-        } else {
-            return true;
+            throw new \Exception($process->getErrorOutput(), 1502039452);
         }
+        
+        $this->io->ok();
+        return true;
     }
     
     
@@ -122,15 +128,18 @@ class CreateCommand extends AbstractDatabaseCommand
      * 
      * @param string $userName
      * @param string $dbName
-     * @param string $error
+     * @throws Exception
      * @return boolean|string
      */
-    private function createUser($userName, $dbName, &$error)
+    private function createUser($userName, $dbName)
     {
         $randomPassword = \GlowPointZero\LocalDevTools\Utility::generateRandomString(6);
+        $this->setNewPassword($randomPassword);
         $userAndHostCombo = sprintf('\'%s\'@\'%%\'', $userName); // 'username'@'%'
         
-        $createUserProcess = $this->processDbCommand(
+        $this->io->processing(sprintf('Creating user %s for db "%s"', $userName, $dbName));
+        
+        $grantPrivilegesProcess = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
             $this->inputInterface->getOption('localRootUserName'),
             $this->inputInterface->getOption('localRootUserPassword'),
@@ -141,12 +150,13 @@ class CreateCommand extends AbstractDatabaseCommand
                 $randomPassword
             )
         );
-        
-        if ($createUserProcess->getExitCode() !== 0) {
-            $error = $createUserProcess->getErrorOutput();
-            return false;
+        if ($grantPrivilegesProcess->getExitCode() !== 0) {
+            throw new \Exception($grantPrivilegesProcess->getErrorOutput(), 1502040558);
         }
+        $this->setHasCreatedANewUser(true);
+        $this->io->ok();
         
+        $this->io->processing(sprintf('Granting the user %s all privileges', $userName));
         $grantPrivilegesProcess = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
             $this->inputInterface->getOption('localRootUserName'),
@@ -158,13 +168,13 @@ class CreateCommand extends AbstractDatabaseCommand
                 $userAndHostCombo
             )
         );
+        $this->io->ok();
         
         if ($grantPrivilegesProcess->getExitCode() !== 0) {
-            $error = $grantPrivilegesProcess->getErrorOutput();
-            return false;
-        } else {
-            return $randomPassword;
+            throw new \Exception($grantPrivilegesProcess->getErrorOutput(), 1502040602);
         }
+        
+        return $randomPassword;
     }
     
     

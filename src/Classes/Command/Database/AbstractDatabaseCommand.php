@@ -150,15 +150,14 @@ class AbstractDatabaseCommand extends AbstractCommand
      * @param string $userName
      * @param string $password
      * @param string $databaseName
-     * @param reference &$errors
-     * @return boolean|string
+     * @throws Exception
+     * @return string
      */
     protected function createDbDump(
             $host,
             $userName,
             $password,
-            $databaseName,
-            &$error
+            $databaseName
         )
     {
         $dumpPath = 
@@ -171,7 +170,9 @@ class AbstractDatabaseCommand extends AbstractCommand
         $dumpName = sprintf('%s--%s--%s.sql', $databaseName, $host, date('Y-m-d--H-i-s'));
         
         $dumpAbsPath = $dumpPath . DIRECTORY_SEPARATOR . $dumpName;
-         
+        
+        $this->io->processing(sprintf('Dumping the database %s (@%s) into "%s"', $databaseName, $host, $dumpAbsPath));
+
         $process = $this->processDbCommand(
             $host,
             $userName,
@@ -185,27 +186,26 @@ class AbstractDatabaseCommand extends AbstractCommand
         );
         
         if ($process->getExitCode() !== 0) {
-            $error = $process->getErrorOutput();
-            return false;
+            throw new \Exception($process->getErrorOutput(), 1502037510);
         } elseif( (@filesize($dumpAbsPath) === 0) ) {
-            $error = 'The dump file seems to be empty - plausibility check failed.';
-            return false;
-        } else {
-            return $dumpAbsPath;
+            throw new \Exception('The dump file is empty. Something went wrong.', 1502037652);
         }
+        
+        $this->io->ok('dumped.');
+        
+        return $dumpAbsPath;
     }
     
     /**
      * Checks, whether a specific local database exists
      * 
      * @param string $databaseName
-     * @param type $error
+     * @throws Exception
      * @return boolean
      */
-    protected function localDatabaseExists(
-            $dbName,
-            &$error)
+    protected function localDatabaseExists($dbName)
     {
+        $this->io->processing(sprintf('Checking, whether the db "%s" exists on your system', $dbName));
         
         $process = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
@@ -216,13 +216,18 @@ class AbstractDatabaseCommand extends AbstractCommand
         );
         
         if ($process->getExitCode() !== 0) {
-            $error = $process->getErrorOutput();
-            return false;
-        } else {
-            $error = false;
-            $databaseNamePattern = sprintf('/<field name="Database">%s<\/field>/i', $dbName);
-            return preg_match($databaseNamePattern, $process->getOutput());
+            throw new \Exception($process->getErrorOutput(), 1502038887);
         }
+        
+        $databaseNamePattern = sprintf('/<field name="Database">%s<\/field>/i', $dbName);
+        $dbExists = preg_match($databaseNamePattern, $process->getOutput());
+        if ($dbExists) {
+            $this->io->write('it does!', true);
+        } else {
+            $this->io->write('it doesn\'t!', true);
+        }
+        
+        return $dbExists;
     }
     
     
@@ -230,14 +235,13 @@ class AbstractDatabaseCommand extends AbstractCommand
      * Checks, whether a specific local database exists
      * 
      * @param string $dbUserName
-     * @param string|false $error
+     * @throws Exception
      * @return boolean
      */
-    protected function localDatabaseUserExists(
-            $dbUserName,
-            &$error)
+    protected function localDatabaseUserExists($dbUserName)
     {
-        
+        $this->io->processing(sprintf('Checking, whether the db user "%s" exists on your system', $dbUserName));
+
         $process = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
             $this->inputInterface->getOption('localRootUserName'),
@@ -247,18 +251,25 @@ class AbstractDatabaseCommand extends AbstractCommand
         );
         
         if ($process->getExitCode() !== 0) {
-            $error = $process->getErrorOutput();
-            return false;
-        } else {
-            $error = false;
-            preg_match_all('/<field name="foundUsers">([0-9]+)<\/field>/i', $process->getOutput(), $matches);
-            if (!isset($matches[1][0])) {
-                $error = 'Could not parse query result correctly to determine the existing number of users.';
-                return false;
-            } else {
-                return $matches[1][0] > 0;
-            }
+            throw new \Exception($process->getErrorOutput(), 1502038955);
         }
+        
+        preg_match_all('/<field name="foundUsers">([0-9]+)<\/field>/i', $process->getOutput(), $matches);
+        if (!isset($matches[1][0])) {
+            throw new \Exception(
+                'Could not parse query result to determine the existing number of users.',
+                1502038983
+            );
+        }
+        
+        $userExists = $matches[1][0] > 0;
+        if ($userExists) {
+            $this->io->write('it does!', true);
+        } else {
+            $this->io->write('it doesn\'t!', true);
+        }
+        
+        return $userExists;
     }
     
     
@@ -266,11 +277,20 @@ class AbstractDatabaseCommand extends AbstractCommand
      * Imports a .sql file into a local database
      * 
      * @param string $dumpFilePath Path to the dump file
-     * @param type $error
+     * @throws Exception
      * @return boolean
      */
-    protected function importDumpToLocalDb($dumpFilePath, &$error)
+    protected function importDumpToLocalDb($dumpFilePath)
     {
+        $localDatabaseName = $this->inputInterface->getOption('localDatabaseName');
+        $this->io->processing(
+            sprintf(
+                'Importing dump file %s into local database %s',
+                $dumpFilePath,
+                $localDatabaseName
+            )
+        );
+        
         $importProcess = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
             $this->inputInterface->getOption('localUserName'),
@@ -278,17 +298,17 @@ class AbstractDatabaseCommand extends AbstractCommand
             null,
             sprintf(
                 'mysql "%s" < "%s"',
-                $this->inputInterface->getOption('localDatabaseName'),
+                $localDatabaseName,
                 $dumpFilePath
             )
         );
         
         if ($importProcess->getExitCode() !== 0) {
-            $error = $importProcess->getErrorOutput();
-            return false;
-        } else {
-            return true;
+            throw new \Exception($importProcess->getErrorOutput(), 1502037658);
         }
+        
+        $this->io->ok('done.');
+        return true;
     }
     
 }

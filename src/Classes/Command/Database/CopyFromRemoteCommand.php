@@ -4,17 +4,12 @@ namespace GlowPointZero\LocalDevTools\Command\Database;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Process\Process;
-
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use GlowPointZero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
 
 /**
- * Creates all needed directories, files, etc.
- * to get started with a new project. Provides
- * option to clone & composer install an existing
- * project directly.
+ * Copies a database from a remote server to a local one
  */
-class CopyFromRemoteCommand extends AbstractCommand
+class CopyFromRemoteCommand extends AbstractDatabaseCommand
 {
     
     const COMMAND_NAME = 'db:copyfromremote';
@@ -33,21 +28,21 @@ class CopyFromRemoteCommand extends AbstractCommand
             'Remote db host name or ip',
             null,
             null,
-            '/^[0-9a-z\-\.]{3,}$/i'
+            '/^[0-9a-z\-\._]{3,}$/i'
         );
         $this->addValidatableOption(
             'remoteDatabaseName',
             'Remote database name',
             null,
             null,
-            '/^[0-9a-z\-\.]{3,}$/i'
+            '/^[0-9a-z\-\._]{3,}$/i'
         );
         $this->addValidatableOption(
             'remoteUserName',
             'Remote db user name',
             null,
             null,
-            '/^[0-9a-z\-\.]{3,}$/i'
+            '/^[0-9a-z\-\._]{3,}$/i'
         );
         $this->addValidatableOption(
             'remotePassword',
@@ -56,35 +51,6 @@ class CopyFromRemoteCommand extends AbstractCommand
             null,
             '/^.*$/'
         );
-        $this->addValidatableOption(
-            'localHost',
-            'Local db host name or ip',
-            '127.0.0.1',
-            null,
-            '/^[0-9a-z\-\.]{3,}$/i'
-        );
-        $this->addValidatableOption(
-            'localDatabaseName',
-            'Local database name',
-            null,
-            null,
-            '/^[0-9a-z\-\.]{3,}$/i'
-        );
-        $this->addValidatableOption(
-            'localUserName',
-            'Local db user name',
-            null,
-            null,
-            '/^[0-9a-z\-\.]{3,}$/i'
-        );
-        $this->addValidatableOption(
-            'localPassword',
-            'Password (local user)',
-            '',
-            null,
-            '/^.*$/'
-        );
-        
         
     }
     
@@ -94,143 +60,65 @@ class CopyFromRemoteCommand extends AbstractCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->localConfiguration->load();
-        $this->localConfiguration->validate();
         
-        $this->validateAllOptions();
-        
-        if (!$this->remoteDbIsAccessible()) {
-            return;
+        $remoteDbIsAccessible = $this->remoteDbIsAccessible($remoteDbAccessErrors);
+        if ($remoteDbIsAccessible !== true) {
+            $this->io->error($remoteDbAccessErrors);
+            return 1;
         }
-        $remoteDbDumpPath = $this->createDbDump('remote');
-        $this->io->success($remoteDbDumpPath);
-        
-        if ($this->localDbExists()) {
-            $localDbDumpPath = $this->createDbDump('local');
-            $this->io->success($localDbDumpPath);
+        $remoteDbDumpPath = $this->createDbDump(
+            $this->inputInterface->getOption('remoteHost'),
+            $this->inputInterface->getOption('remoteUserName'),
+            $this->inputInterface->getOption('remotePassword'),
+            $this->inputInterface->getOption('remoteDatabaseName'),
+            $dumpErrors
+        );
+        if ($remoteDbDumpPath === false) {
+            $this->io->error($dumpErrors);
+            return 1;
+        } else {
+            $this->io->text('Remote database dumped to '. $remoteDbDumpPath);
         }
         
-        $this->io->writeln('Done');
+        
+        if (!$this->localDatabaseExists($this->inputInterface->getOption('localDatabaseName'))) {
+            $createCommand = $this->getApplication()->find(CreateCommand::COMMAND_NAME);
+            $createCommand->run(
+                new ArrayInput([
+                    '--newDatabaseName' => $this->inputInterface->getOption('localDatabaseName'),
+                    '--newUserName' => $this->inputInterface->getOption('localUserName')
+                ]),
+                $output
+            );
+        }
+        
+        $this->importDumpToLocalDb($remoteDbDumpPath);
+        
     }
+    
     
     
     /**
      * Checks whether the remote database is accessible
      * 
-     * @return boolean
+     * @var reference $errors
+     * @return boolean|string
      */
-    protected function remoteDbIsAccessible()
+    protected function remoteDbIsAccessible(&$errors)
     {
-        $process = $this->processDbCommand('remote', 'mysql', ['SHOW TABLES']);
+        $process = $this->processDbCommand(
+            $this->inputInterface->getOption('remoteHost'),
+            $this->inputInterface->getOption('remoteUserName'),
+            $this->inputInterface->getOption('remotePassword'),
+            null,
+            '"SHOW TABLES FROM '. $this->inputInterface->getOption('remoteDatabaseName') . '"'
+        );
         if ($process->getExitCode() !== 0) {
-            $this->io->error($process->getErrorOutput());
+            $errors = $process->getErrorOutput();
             return false;
         } else {
             return true;
         }
     }
     
-    protected function localDbExists()
-    {
-        $process = $this->processDbCommand('local', 'mysql', ['SHOW DATABASES']);
-
-        if ($process->getExitCode() !== 0) {
-            $errorMessage = $process->getErrorOutput();
-            $this->io->error($process->getExitCodeText());
-            return 0;
-        } else {
-            
-            $databaseNamePattern = sprintf('/\n%s\s/', $this->inputInterface->getOption('localDatabaseName'));
-            return preg_match($databaseNamePattern, $process->getOutput());
-            
-        }
-    }
-    
-    
-    /**
-     * Runs a command on the local or remote db
-     * 
-     * @param string $db              'local' or 'remote'
-     * @param string $commandType      Command to execute, either mysql or mysqldump
-     * @param array  $commandArguments Special arguments to be used by the command
-     * @return Process
-     */
-    protected function processDbCommand($db='local', $commandType, $commandArguments = [])
-    {
-        
-        if (!in_array($commandType, ['mysql', 'mysqldump'])) {
-            throw new \Exception(sprintf('Command type "%s" is not allowed.', $commandType));
-        }
-        
-        $defaultsFileOption = $this->fileSystem->createTemporaryFile();
-        $this->fileSystem->appendToFile(
-            $defaultsFileOption,
-            sprintf(
-                '[client]%spassword="%s"',
-                PHP_EOL,
-                $this->inputInterface->getOption($db . 'Password')
-            )
-        );
-        
-        $databaseName = $this->inputInterface->getOption($db . 'DatabaseName');
-        $databaseOption = sprintf(
-            '--database="%s"',
-            $databaseName
-        );
-        
-        
-        $commandLine = sprintf(
-            '%s --defaults-file="%s" --host="%s" %s --user="%s" %s"%s"',
-            $commandType,
-            $defaultsFileOption,
-            $this->inputInterface->getOption($db . 'Host'),
-            (preg_match('/SHOW DATABASE/i', $commandArguments[0]) || $commandType === 'mysqldump') ? '' : $databaseOption,
-            $this->inputInterface->getOption($db . 'UserName'),
-            $commandType === 'mysqldump' ? '"' . $databaseName . '" > ' : '--execute=',
-            $commandArguments[0]
-        );
-        $this->io->comment($commandLine);
-        $connectionProcess = new Process($commandLine);
-        $connectionProcess->run();
-        return $connectionProcess;
-    }
-    
-    
-    /**
-     * Dumps DB to a local file and returns path.
-     * 
-     * @var string $db 'local' or 'remote'
-     * @return boolean|string
-     */
-    protected function createDbDump($db = 'local')
-    {
-        $dumpPath = 
-            $this->fileSystem->getUserHome()
-            . DIRECTORY_SEPARATOR
-            . 'dumps';
-        
-        $this->fileSystem->mkdir($dumpPath);
-        
-        $dumpName =
-            $this->inputInterface->getOption($db . 'DatabaseName')
-            . '--' . $this->inputInterface->getOption($db . 'Host')
-            . '--' . date('Y-m-d--H-i-s')
-            . '.sql';
-        
-        $dumpAbsPath = $dumpPath . DIRECTORY_SEPARATOR . $dumpName;
-                
-        $process = $this->processDbCommand(
-            $db,
-            'mysqldump',
-            [$dumpAbsPath]
-        );
-        
-        if ($process->getExitCode() === 0) {
-            return $dumpAbsPath;
-        } else {
-            $this->io->error($process->getErrorOutput());
-            return false;
-        }
-        
-    }
 }

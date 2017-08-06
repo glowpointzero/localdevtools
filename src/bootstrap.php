@@ -12,6 +12,9 @@ $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\SetupCommand());
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Configuration\DiagnoseCommand());
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Server\RestartCommand());
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\CreateLocalProjectCommand());
+$localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\CreateCommand());
+$localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\ImportCommand());
+$localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\DumpCommand());
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\CopyFromRemoteCommand());
 
 $localDevTools->run();

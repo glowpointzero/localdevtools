@@ -104,10 +104,6 @@ class CreateLocalProjectCommand extends AbstractCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->localConfiguration->load();
-        $this->localConfiguration->validate();
-        
-        $this->validateAllOptions();
         $this->createDirectories();
 
         if ($this->createVhostConfiguration()) {
@@ -144,7 +140,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         }
         try {
             $this->fileSystem->mkdir($projectRoot);
-            $this->io->write('<info>ok!</info>', true);
+            $this->io->ok();
         } catch (\Exception $exception) {
             $this->io->error($exception->getMessage());
             $this->letUserDecideOnContinuing();
@@ -157,11 +153,11 @@ class CreateLocalProjectCommand extends AbstractCommand
         $this->io->write(sprintf(' Creating project files root directory %s ... ', $projectFilesRoot));
     
         if ($this->fileSystem->exists($projectFilesRoot)) {
-            $this->io->write('<info>exists. Ok!</info>', true);
+            $this->io->ok('exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($projectFilesRoot);
-                $this->io->write('<info>ok!</info>', true);
+                $this->io->ok();
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $this->letUserDecideOnContinuing();
@@ -175,11 +171,11 @@ class CreateLocalProjectCommand extends AbstractCommand
         $this->io->write(sprintf(' Creating logs directory %s ... ', $logsDirectory));
 
         if ($this->fileSystem->exists($logsDirectory)) {
-            $this->io->text('<info>exists. Ok!</info>');
+            $this->io->ok('exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($logsDirectory);
-                $this->io->text('<info>ok!</info>');
+                $this->io->ok();
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $this->letUserDecideOnContinuing();
@@ -192,11 +188,11 @@ class CreateLocalProjectCommand extends AbstractCommand
         $this->io->write(sprintf(' Creating public html directory %s ... ', $documentRoot));
 
         if ($this->fileSystem->exists($documentRoot)) {
-            $this->io->text('<info>exists. Ok!</info>');
+            $this->io->ok('exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($documentRoot);
-                $this->io->text('<info>ok!</info>');
+                $this->io->ok();
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $this->letUserDecideOnContinuing();
@@ -277,7 +273,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         $written = false;
         try {
             $this->fileSystem->appendToFile($vhostConfigurationPath, $templateContents);
-            $this->io->write(' <info>ok!</info>', true);
+            $this->io->ok();
             $written = true;
         } catch (\Exception $exception) {
             $this->io->error($exception->getMessage());
@@ -375,7 +371,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         );
         $cloneProcess->run();
         if ($cloneProcess->isSuccessful()) {
-            $this->io->write('<info>ok!</info>', true);
+            $this->io->ok();
         } else {
             $this->io->error($cloneProcess->getErrorOutput());
         }
@@ -407,7 +403,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         $composerProcess->run();
         
         if ($composerProcess->isSuccessful()) {
-            $this->io->write('<info>ok!</info>', true);
+            $this->io->ok();
             return true;
         } else {
             $this->io->error($composerProcess->getErrorOutput());

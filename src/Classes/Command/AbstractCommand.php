@@ -5,10 +5,10 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 use GlowPointZero\LocalDevTools\LocalConfiguration;
 use GlowPointZero\LocalDevTools\Component\Filesystem;
+use GlowPointZero\LocalDevTools\Style\DevToolsStyle;
 
 abstract class AbstractCommand extends Command
 {
@@ -17,7 +17,7 @@ abstract class AbstractCommand extends Command
     
     
     /**
-     * @var SymfonyStyle
+     * @var DevToolsStyle
      */
     var $io;
     
@@ -70,10 +70,22 @@ abstract class AbstractCommand extends Command
     
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->inputInterface = $input; // unfortunately 'input' is not available via SymfonyStyle...
-        $this->io = new SymfonyStyle($input, $output);
-        
+        $this->inputInterface = $input;
+        $this->io = new DevToolsStyle($input, $output);
     }
+    
+    
+    
+    protected function interact(InputInterface $input, OutputInterface $output)
+    {
+        parent::interact($input, $output);
+        
+        $this->localConfiguration->load();
+        $this->localConfiguration->validate();
+        
+        $this->validateAllOptions();
+    }
+    
     
     /**
      * Adds a controller option that may later be validated and ask the user correction for
@@ -87,23 +99,40 @@ abstract class AbstractCommand extends Command
      */
     public function addValidatableOption($name, $description, $default = null, $choices = [], $validation = null, $onlyValidateIfOptionSet = null)
     {
+        if (count($choices) === 2 && in_array(true, $choices) && in_array(false, $choices)) {
+            $isBoolean = true;
+        } else {
+            $isBoolean = false;
+        }
         
-        parent::addOption(
-            $name,
-            null,
-            InputOption::VALUE_REQUIRED, // This indicates, whether the option may be set without value (i.e. boolean)
-            $description,
-            $default
-        );
-        
+        // Add original values to options stack
         $this->options[$name] = [
             'description' => $description,
             'default' => $default,
             'choices' => $choices,
-            'validation' => $validation ? $validation : false,
+            'validation' => $validation === false ? false : $validation,
             'onlyValidateIfOptionSet' => $onlyValidateIfOptionSet,
-            'validationRound' => 1
+            'validationRound' => 1,
+            'isBoolean' => $isBoolean
         ];
+        
+        // Add 'official' console option
+        // REQUIRED means that an option *value* is required (option doesn't work if set, but left empty)
+        $inputOptionMode = InputOption::VALUE_REQUIRED;
+        if ($isBoolean) {
+            $inputOptionMode = InputOption::VALUE_NONE;
+            $default = null;
+        }
+        
+        parent::addOption(
+            $name,
+            null,
+            $inputOptionMode,
+            $description,
+            $default
+        );
+        
+        
     }
     
     /**
@@ -116,7 +145,6 @@ abstract class AbstractCommand extends Command
            $optionNeedsValidation = $this->optionNeedsValidation($optionName);
            
            while ($optionNeedsValidation && !$this->optionIsValid($optionName)) {
-               
                if ($optionDefinition['validationRound'] > 1) {
                    $this->outputErrorForOption($optionName);
                }
@@ -184,6 +212,9 @@ abstract class AbstractCommand extends Command
             return false;
         }
         
+        if ($optionDefinition['isBoolean'] && ($optionValue === true || $optionValue === false)) {
+            return true;
+        }
         if (!$isEmpty && $needsAnyValue) {
             return true;
         }
@@ -226,7 +257,11 @@ abstract class AbstractCommand extends Command
     protected function letUserSetOption($optionName)
     {
         $optionDefinition = $this->options[$optionName];
-        if (count($optionDefinition['choices'])) {
+        
+        if ($optionDefinition['isBoolean']) {
+            $defaultBooleanOption = ($optionDefinition['default'] === null) ? false : $optionDefinition['default'];
+            $newValue = $this->io->confirm($optionDefinition['description'], $defaultBooleanOption);
+        } elseif (count($optionDefinition['choices'])) {
             $newValue = $this->io->choice($optionDefinition['description'], $optionDefinition['choices']);
         } else {
             if (preg_match('/passw/i', $optionName)) {

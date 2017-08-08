@@ -116,27 +116,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         $this->extendHostsFile();
         
         $this->io->section('Database');
-        $doneHandlingDatabases = false;
-        while (!$doneHandlingDatabases) {
-            $copyDbFromRemote = $this->io->confirm('Copy existing database from remote server?');
-            try {
-                if ($copyDbFromRemote) {
-                    $copyFromRemoteCommand = $this->getApplication()->find(Database\CopyFromRemoteCommand::COMMAND_NAME);
-                    $copyFromRemoteCommand->run(new ArrayInput([]), $output);
-                } else {
-                    $createLocalDb = $this->io->confirm('Create local database?');
-                    $createLocalCommand = $this->getApplication()->find(Database\CreateCommand::COMMAND_NAME);
-                    $createLocalCommand->run(new ArrayInput([]), $output);
-                }
-                
-                $doneHandlingDatabases = true;
-                
-            } catch (\Exception $exception) {
-                $this->io->error($exception->getMessage());
-                $doneHandlingDatabases = !$this->io->confirm('It seems like this didn\'t go as planned. Try again?');
-            }
-        }
-        
+        $this->handleLocalDatabaseCreationAndImport($output);
         
         $this->io->section('Git & Composer');
         if ($this->inputInterface->getOption('gitRepository')) {
@@ -144,7 +124,7 @@ class CreateLocalProjectCommand extends AbstractCommand
             if ($gitCloned) {
                 try {
                     $this->runComposerActions();
-                } catch (Exception $ex) {
+                } catch (\Exception $exception) {
                     $this->io->error(
                         'Composer failed somehow. This script will now terminate.'
                         . ' Run the composer command again, once you looked into it.'
@@ -281,7 +261,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         }
         
         // Load server configuration template and replace placeholders
-        foreach ($this->options as $optionName => $optionConfiguration) {
+        foreach (array_keys($this->options) as $optionName) {
             $templateContents = str_replace(
                 sprintf('((((%s))))', $optionName),
                 $this->inputInterface->getOption($optionName),
@@ -386,6 +366,59 @@ class CreateLocalProjectCommand extends AbstractCommand
         return $templateContents;
     }
     
+    
+    /**
+     * Handles all the creating / copying of databases during
+     * the 'execute()' process
+     * 
+     * @param OutputInterface $output
+     */
+    protected function handleLocalDatabaseCreationAndImport($output)
+    {
+        $doneCreatingLocalDatabase = false;
+        $localDatabaseCreated = false;
+        $createALocalDatabase = $this->io->confirm('Create a local database?');
+        while (!$doneCreatingLocalDatabase && $createALocalDatabase) {
+            
+            $createLocalCommand = $this->getApplication()->find(Database\CreateCommand::COMMAND_NAME);
+            
+            try {
+                $createLocalCommand->run(new ArrayInput([]), $output);
+                $doneCreatingLocalDatabase = true;
+                $localDatabaseCreated = true;
+                
+            } catch (\Exception $exception) {
+                $this->io->error($exception->getMessage());
+                $doneCreatingLocalDatabase = !$this->io->confirm('It seems like this didn\'t go as planned. Try again?');
+            }
+            
+        }
+        
+        $localDatabaseOptions = [];
+        if ($localDatabaseCreated) {
+            $localDatabaseOptions['--localHost'] = $createLocalCommand->getResultValue('--localHost');
+            $localDatabaseOptions['--localRootUserName'] = $createLocalCommand->getResultValue('--localRootUserName');
+            $localDatabaseOptions['--localRootUserPassword'] = $createLocalCommand->getResultValue('--localRootUserPassword');
+            $localDatabaseOptions['--localDatabaseName'] = $createLocalCommand->getResultValue('dbName');
+            $localDatabaseOptions['--localUserName'] = $createLocalCommand->getResultValue('userName');
+            $localDatabaseOptions['--localPassword'] = $createLocalCommand->getResultValue('password');
+        }
+        
+        $doneImportingRemoteDatabase = false;
+        $importRemoteDatabase = $this->io->confirm('Import a remote DB to the local database?');
+        while (!$doneImportingRemoteDatabase && $importRemoteDatabase) {
+            try {
+                $copyFromRemoteCommand = $this->getApplication()->find(Database\CopyFromRemoteCommand::COMMAND_NAME);
+                $copyFromRemoteCommand->run(new ArrayInput($localDatabaseOptions), $output);
+                
+                $doneImportingRemoteDatabase = true;
+                
+            } catch (\Exception $exception) {
+                $this->io->error($exception->getMessage());
+                $doneImportingRemoteDatabase = !$this->io->confirm('It seems like this didn\'t go as planned. Try again?');
+            }
+        }
+    }
     
     /**
      * Clones git repository set via option ('gitRepository') into

@@ -61,6 +61,7 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $localDbName = $this->inputInterface->getOption('localDatabaseName');
+        $localUserName = $this->inputInterface->getOption('localUserName');
             
         try {
             $this->remoteDbIsAccessible();
@@ -77,19 +78,12 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
         );
                 
         if (!$this->localDatabaseExists($localDbName)) {
-            $this->io->processing('Local database doesn\'t exist yet. Creating');
-            
-            $createCommand = $this->getApplication()->find(CreateCommand::COMMAND_NAME);
-            $createCommand->run(
-                new ArrayInput([
-                    '--newDatabaseName' => $localDbName,
-                    '--newUserName' => $this->inputInterface->getOption('localUserName')
-                ]),
-                $output
-            );
-            if ($createCommand->hasCreatedANewUser()) {
-                $this->inputInterface->setOption('localPassword', $createCommand->getNewPassword());
-            }
+            $this->io->text('Local database doesn\'t exist yet.');
+            $this->createLocalDatabase($localDbName);
+        }
+        
+        if (!$this->localDatabaseUserExists($localUserName)) {
+            $this->createLocalDatabaseUser($localUserName, $localDbName);
         }
         
         $this->importDumpToLocalDb($remoteDbDumpPath);

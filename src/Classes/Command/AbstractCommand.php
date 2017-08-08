@@ -47,6 +47,15 @@ abstract class AbstractCommand extends Command
     protected $options = [];
     
     
+    /**
+     * May contain result values that need to be accessed
+     * from outside of the command after it has been run.
+     * 
+     * @var array 
+     */
+    protected $resultValues = [];
+    
+    
     
     protected function configure()
     {
@@ -90,12 +99,12 @@ abstract class AbstractCommand extends Command
     /**
      * Adds a controller option that may later be validated and ask the user correction for
      * 
-     * @param string $name
-     * @param string $description
-     * @param string $default
-     * @param array $choices
-     * @param mixed $validation
-     * @param string $onlyValidateIfOptionSet
+     * @param string $name                    Option identifier
+     * @param string $description             Option description
+     * @param string $default                 Default value (optional)
+     * @param array $choices                  Option choices (optional)
+     * @param mixed $validation               Validate input (true | regex pattern)
+     * @param string $onlyValidateIfOptionSet Other option that must be set to trigger the validation of this one
      */
     public function addValidatableOption($name, $description, $default = null, $choices = [], $validation = null, $onlyValidateIfOptionSet = null)
     {
@@ -144,16 +153,28 @@ abstract class AbstractCommand extends Command
        foreach($this->options as $optionName => $optionDefinition) {
            $optionNeedsValidation = $this->optionNeedsValidation($optionName);
            
-           while ($optionNeedsValidation && !$this->optionIsValid($optionName)) {
-               if ($optionDefinition['validationRound'] > 1) {
+           if ($this->optionIsValid($optionName)
+                && $this->inputInterface->hasParameterOption('--'. $optionName)) {
+               
+                $optionNeedsValidation = false;
+           }
+           
+           while ($optionNeedsValidation) {
+               if ($this->options[$optionName]['validationRound'] > 1) {
                    $this->outputErrorForOption($optionName);
                }
                
                $this->letUserSetOption($optionName);
-               
+
                $optionDefinition['validationRound']++;
                $this->options[$optionName]['validationRound']++;
+               $optionNeedsValidation = !$this->optionIsValid($optionName);
             }
+        }
+        
+        // Reset 'validationRounds'
+        foreach ($this->options as $optionName => $optionDefinition) {
+            $this->options[$optionName]['validationRound'] = 1;
         }
     }
     
@@ -167,6 +188,10 @@ abstract class AbstractCommand extends Command
     protected function optionNeedsValidation($optionName)
     {
         $optionDefinition = $this->options[$optionName];
+        $optionValue = $this->inputInterface->getOption($optionName);
+        $isDefaultValue = ($optionValue === $optionDefinition['default']);
+        $isEmpty = empty($optionValue);
+        
         $needsValidation = true;
         
         if ($optionDefinition['validation'] === false) {
@@ -179,6 +204,12 @@ abstract class AbstractCommand extends Command
             if ($otherOptionValue === $otherOptionDefault || empty($otherOptionValue)) {
                 $needsValidation = false;
             }
+        }
+        
+        $isAtLeastSecondValidationRound = ($optionDefinition['validationRound'] > 1);
+        if (($isEmpty || $isDefaultValue) && $isAtLeastSecondValidationRound) {
+            
+            $needsValidation = false;
         }
         
         return $needsValidation;
@@ -195,11 +226,7 @@ abstract class AbstractCommand extends Command
     {
         $optionDefinition = $this->options[$optionName];
         $optionValue = $this->inputInterface->getOption($optionName);
-        
-        $isDefaultValue = ($optionValue === $optionDefinition['default']);
         $needsAnyValue = ($optionDefinition['validation'] === true);
-        $isEmpty = empty($optionValue);
-        $isAtLeastSecondValidationRound = ($optionDefinition['validationRound'] > 1);
         
         if (substr($optionDefinition['validation'], 0, 1) === '/') {
             $hasRegex = true;
@@ -208,14 +235,10 @@ abstract class AbstractCommand extends Command
             $hasRegex = false;
         }
         
-        if (($isEmpty || $isDefaultValue) && !$isAtLeastSecondValidationRound) {
-            return false;
-        }
-        
         if ($optionDefinition['isBoolean'] && ($optionValue === true || $optionValue === false)) {
             return true;
         }
-        if (!$isEmpty && $needsAnyValue) {
+        if (!empty($optionValue) && $needsAnyValue) {
             return true;
         }
         if ($hasRegex && $regexMatches) {
@@ -280,13 +303,15 @@ abstract class AbstractCommand extends Command
         if ($newValue === null) {
             $newValue = '';
         }
+        
+        $this->setResultValue('--' . $optionName, $newValue);
         $this->inputInterface->setOption($optionName, $newValue);
     }
     
     
     /**
      * Asks the user, whether he/she likes to continue in the
-     * process and auto-quits if chosen 'no' (overridable).
+     * process and auto-quits if chosen 'no' (overrideable).
      * 
      * @param string $reasonWhyProcessStopped
      * @param bool $abortIfUserDecidesToQuit
@@ -310,6 +335,25 @@ abstract class AbstractCommand extends Command
         
         return $continue;
         
+    }
+    
+    /**
+     * Gets a specific result/return value of this command
+     * 
+     * @return mixed
+     */
+    public function getResultValue($key)
+    {        
+        if (!isset($this->resultValues[$key])) {
+            return null;
+        } else {
+            return $this->resultValues[$key];
+        }
+    }
+    
+    protected function setResultValue($key, $value)
+    {
+        $this->resultValues[$key] = $value;
     }
     
 }

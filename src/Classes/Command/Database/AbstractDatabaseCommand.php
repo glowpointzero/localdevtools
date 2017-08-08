@@ -232,6 +232,133 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     
     /**
+     * Creates local database
+     * 
+     * 
+     * @param string $dbName
+     * @param string $userName
+     * @param boolean $setLocalPasswordOnSuccess If true, the 'localPassword'
+     *                                           will be reset to the automatically
+     *                                           generated password
+     * @throws \Exception
+     */
+    protected function createLocalDatabase($dbName)
+    {
+        $this->io->processing(sprintf('Creating database "%s"', $dbName));
+        
+        $process = $this->processDbCommand(
+            $this->inputInterface->getOption('localHost'),
+            $this->inputInterface->getOption('localRootUserName'),
+            $this->inputInterface->getOption('localRootUserPassword'),
+            null,
+            sprintf('"CREATE DATABASE %s COLLATE utf8_general_ci"', $dbName)
+        );
+
+        if ($process->getExitCode() !== 0) {
+            throw new \Exception($process->getErrorOutput(), 1502039452);
+        }
+        $this->io->ok('created');
+        return true;
+    }
+    
+    
+    /**
+     * Creates a local database user and grants access to a specific database
+     * 
+     * @param string $userName
+     * @param string $databaseName
+     * @return string
+     * @throws \Exception
+     */
+    protected function createLocalDatabaseUser($userName, $databaseName)
+    {
+        $randomPassword = \GlowPointZero\LocalDevTools\Utility::generateRandomString(6);
+        $userAndHostCombo = sprintf('\'%s\'@\'%%\'', $userName); // 'username'@'%'
+        
+        $this->io->processing(sprintf('Creating user %s for db "%s"', $userName, $databaseName));
+        
+        $grantPrivilegesProcess = $this->processDbCommand(
+            $this->inputInterface->getOption('localHost'),
+            $this->inputInterface->getOption('localRootUserName'),
+            $this->inputInterface->getOption('localRootUserPassword'),
+            $databaseName,
+            sprintf(
+                '"CREATE USER %s IDENTIFIED BY \'%s\'"',
+                $userAndHostCombo,
+                $randomPassword
+            )
+        );
+        if ($grantPrivilegesProcess->getExitCode() !== 0) {
+            throw new \Exception($grantPrivilegesProcess->getErrorOutput(), 1502040558);
+        }
+        
+        $this->io->ok();
+        $this->io->success(sprintf('New user/password: %s / %s', $userName, $randomPassword));
+        
+        // Re-set current option values for 'localDatabaseName', user name and
+        // password, if those options exist in the current call.
+        if ($this->inputInterface->hasOption('localDatabaseName')
+                && $this->inputInterface->hasOption('localUserName')) {
+            
+            if ($this->inputInterface->getOption('localDatabaseName') === $databaseName) {
+                $this->inputInterface->setOption('localUserName', $userName);
+                $this->io->text(sprintf('Using "%s" as new user for the rest of the request.', $userName));
+            }
+            if ($this->inputInterface->getOption('localUserName') === $userName
+                && $this->inputInterface->getOption('localDatabaseName') === $databaseName) {
+                $this->inputInterface->setOption('localPassword', $randomPassword);
+                $this->io->text('Using new password for the rest of the request.');
+            }
+        }
+        
+        $this->io->processing(sprintf('Granting the user %s all privileges', $userName));
+        $grantPrivilegesProcess = $this->processDbCommand(
+            $this->inputInterface->getOption('localHost'),
+            $this->inputInterface->getOption('localRootUserName'),
+            $this->inputInterface->getOption('localRootUserPassword'),
+            $databaseName,
+            sprintf(
+                '"GRANT ALL PRIVILEGES ON %s.* TO %s; FLUSH PRIVILEGES;"',
+                $databaseName,
+                $userAndHostCombo
+            )
+        );
+        
+        if ($grantPrivilegesProcess->getExitCode() !== 0) {
+            throw new \Exception($grantPrivilegesProcess->getErrorOutput(), 1502040602);
+        }
+        
+        $this->io->ok('All privileges granted.', true);
+        
+        return $randomPassword;
+    }
+    
+    
+    /**
+     * Will create both a local database and a corresponding user
+     * 
+     * @param string $dbName
+     * @param string $userName
+     * @return mixed New password, if new user has been created, true otherwise
+     */
+    protected function createLocalDatabaseAndUser($dbName, $userName)
+    {   
+        $dbExists = $this->localDatabaseExists($dbName);
+        if (!$dbExists) {
+            $this->createLocalDatabase($dbName);
+        }
+        
+        $userExists = $this->localDatabaseUserExists($userName);
+        if ($userExists) {
+            $this->io->success('Database user exists already. Please take care of access rights yourself!');
+            return true;
+        } else {
+            return $this->createLocalDatabaseUser($userName, $dbName);
+        }
+    }
+    
+    
+    /**
      * Checks, whether a specific local database exists
      * 
      * @param string $dbUserName

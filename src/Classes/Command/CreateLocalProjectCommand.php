@@ -120,17 +120,8 @@ class CreateLocalProjectCommand extends AbstractCommand
         
         $this->io->section('Git & Composer');
         if ($this->inputInterface->getOption('gitRepository')) {
-            $gitCloned = $this->cloneGit();
-            if ($gitCloned) {
-                try {
-                    $this->runComposerActions();
-                } catch (\Exception $exception) {
-                    $this->io->error(
-                        'Composer failed somehow. This script will now terminate.'
-                        . ' Run the composer command again, once you looked into it.'
-                    );
-                }
-                
+            if ($this->cloneGit()) {
+                $this->runComposerActions();
             }
         }
         
@@ -453,7 +444,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         
         $gitBranch = $this->inputInterface->getOption('gitRepositoryBranch');
         
-        $this->io->processing(sprintf('Cloning %s', $gitRepository));
+        $this->io->processing(sprintf('Cloning Git repository "%s"', $gitRepository));
         $cloneProcess = new Process(
             sprintf(
                 'git clone%s "%s" "%s"',
@@ -463,7 +454,13 @@ class CreateLocalProjectCommand extends AbstractCommand
             )
         );
         $cloneProcess->run();
-        $this->io->ok();
+        if ($cloneProcess->getExitCode() !== 0) {
+            $this->io->error($cloneProcess->getOutput());
+            return false;
+        } else {
+            $this->io->ok();
+            return true;
+        }
     }
     
     /**
@@ -474,7 +471,7 @@ class CreateLocalProjectCommand extends AbstractCommand
     protected function runComposerActions()
     {
         $composerAction = array_search(
-            $this->inputInterface->getOption('composerAction'),
+            $this->inputInterface->getOption('composerActionAfterGitClone'),
             self::COMPOSER_ACTIONS_AFTER_GIT_CLONE
         );
         
@@ -486,10 +483,16 @@ class CreateLocalProjectCommand extends AbstractCommand
             $composerAction > 1 ? 'update' : 'install'
         );
         
-        $this->io->processing(sprintf('Running %s', $composerCommand));
+        $this->io->processing(sprintf('Running composer action "%s"', $composerCommand));
 
         $composerProcess = new Process($composerCommand);
         $composerProcess->run();
-        $this->io->ok();
+        if ($composerProcess->getExitCode() !== 0) {
+            $this->io->error($composerProcess->getOutput());
+            return false;
+        } else {
+            $this->io->ok();
+            return true;
+        }
     }
 }

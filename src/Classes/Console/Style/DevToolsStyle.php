@@ -3,7 +3,7 @@ namespace GlowPointZero\LocalDevTools\Console\Style;
 
 class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
 {
-    
+      
     /**
      * Outputs a 'processing... ' message
      * 

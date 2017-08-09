@@ -59,7 +59,7 @@ abstract class AbstractCommand extends Command
     
     protected function configure()
     {
-        $this->fileSystem = new Filesystem();
+        $this->fileSystem = new \GlowPointZero\LocalDevTools\Console\Component\Filesystem();
         $this->localConfiguration = new \GlowPointZero\LocalDevTools\LocalConfiguration($this->fileSystem);
         
         $this
@@ -80,7 +80,7 @@ abstract class AbstractCommand extends Command
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->inputInterface = $input;
-        $this->io = new DevToolsStyle($input, $output);
+        $this->io = new \GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle($input, $output);
     }
     
     

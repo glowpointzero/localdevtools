@@ -1,11 +1,14 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command;
+namespace GlowPointZero\LocalDevTools\Command\Project;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Process\Process;
 
+use GlowPointZero\LocalDevTools\LocalConfiguration;
+use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use GlowPointZero\LocalDevTools\Command\Server\RestartCommand;
 
 /**
  * Creates all needed directories, files, etc.
@@ -13,10 +16,10 @@ use Symfony\Component\Process\Process;
  * option to clone & composer install an existing
  * project directly.
  */
-class CreateLocalProjectCommand extends AbstractCommand
+class CreateCommand extends AbstractCommand
 {
     
-    const COMMAND_NAME = 'createlocalproject';
+    const COMMAND_NAME = 'project:create';
     const COMMAND_DESCRIPTION = 'Sets up a new project on your local machine.';
     
     const GIT_REPOSITORY_CLONE_TARGETS = ['Project files root directory', 'Document root'];
@@ -110,7 +113,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         $this->io->section('Server');
         $this->createVhostConfiguration();
         $this->getApplication()
-            ->find(Server\RestartCommand::COMMAND_NAME)
+            ->find(RestartCommand::COMMAND_NAME)
             ->run(new ArrayInput([]), $output);
         
         $this->extendHostsFile();
@@ -239,7 +242,7 @@ class CreateLocalProjectCommand extends AbstractCommand
         $templateRootPath = $this->localConfiguration->get('hostConfigurationTemplatesRootPath');
         
         if (!is_dir($templateRootPath . DIRECTORY_SEPARATOR . 'Server')) {
-            $templateRootPath = LOCAL_DEV_TOOLS_ROOT . DIRECTORY_SEPARATOR . \GlowPointZero\LocalDevTools\LocalConfiguration::DEFAULT_TEMPLATE_ROOT_PATH;
+            $templateRootPath = LOCAL_DEV_TOOLS_ROOT . DIRECTORY_SEPARATOR . LocalConfiguration::DEFAULT_TEMPLATE_ROOT_PATH;
         }
         
         $templateRootPath = trim($templateRootPath, ' '. DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'Server';

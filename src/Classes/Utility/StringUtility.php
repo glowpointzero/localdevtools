@@ -1,7 +1,7 @@
 <?php
-namespace GlowPointZero\LocalDevTools;
+namespace GlowPointZero\LocalDevTools\Utility;
 
-class Utility {
+class StringUtility {
     
     /**
      * Generates a random string.

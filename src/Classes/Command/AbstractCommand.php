@@ -310,6 +310,19 @@ abstract class AbstractCommand extends Command
     
     
     /**
+     * Sets a new default option value for an option that has already
+     * been initialized.
+     * 
+     * @param string $optionName
+     * @param mixed $newDefaultValue
+     */
+    public function updateDefaultOptionValue($optionName, $newDefaultValue)
+    {
+        $this->options[$optionName]['default'] = $newDefaultValue;
+    }
+    
+    
+    /**
      * Asks the user, whether he/she likes to continue in the
      * process and auto-quits if chosen 'no' (overrideable).
      * 

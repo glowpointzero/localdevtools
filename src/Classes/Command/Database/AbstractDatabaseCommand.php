@@ -3,6 +3,7 @@ namespace GlowPointZero\LocalDevTools\Command\Database;
 
 use Symfony\Component\Process\Process;
 use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use GlowPointZero\LocalDevTools\Utility\StringUtility;
 
 /**
  * Creates database and corresponding user
@@ -272,7 +273,7 @@ class AbstractDatabaseCommand extends AbstractCommand
      */
     protected function createLocalDatabaseUser($userName, $databaseName)
     {
-        $randomPassword = \GlowPointZero\LocalDevTools\Utility::generateRandomString(6);
+        $randomPassword = StringUtility::generateRandomString(6);
         $userAndHostCombo = sprintf('\'%s\'@\'%%\'', $userName); // 'username'@'%'
         
         $this->io->processing(sprintf('Creating user %s for db "%s"', $userName, $databaseName));

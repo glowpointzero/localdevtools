@@ -107,6 +107,9 @@ class CreateCommand extends AbstractCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        
+        $this->handleLocalDatabaseCreationAndImport($output);
+        
         $this->io->section('File system');
         $this->createDirectories();
 
@@ -374,7 +377,17 @@ class CreateCommand extends AbstractCommand
         $createALocalDatabase = $this->io->confirm('Create a local database?');
         while (!$doneCreatingLocalDatabase && $createALocalDatabase) {
             
-            $createLocalCommand = $this->getApplication()->find(Database\CreateCommand::COMMAND_NAME);
+            $createLocalCommand = $this->getApplication()->find(
+                    \GlowPointZero\LocalDevTools\Command\Database\CreateCommand::COMMAND_NAME
+            );
+            $createLocalCommand->updateDefaultOptionValue(
+                'newDatabaseName',
+                $this->inputInterface->getOption('projectKey')
+            );
+            $createLocalCommand->updateDefaultOptionValue(
+                'newUserName',
+                $this->inputInterface->getOption('projectKey')
+            );
             
             try {
                 $createLocalCommand->run(new ArrayInput([]), $output);
@@ -402,7 +415,7 @@ class CreateCommand extends AbstractCommand
         $importRemoteDatabase = $this->io->confirm('Import a remote DB to the local database?');
         while (!$doneImportingRemoteDatabase && $importRemoteDatabase) {
             try {
-                $copyFromRemoteCommand = $this->getApplication()->find(Database\CopyFromRemoteCommand::COMMAND_NAME);
+                $copyFromRemoteCommand = $this->getApplication()->find(\GlowPointZero\LocalDevTools\Command\Database\CopyFromRemoteCommand::COMMAND_NAME);
                 $copyFromRemoteCommand->run(new ArrayInput($localDatabaseOptions), $output);
                 
                 $doneImportingRemoteDatabase = true;

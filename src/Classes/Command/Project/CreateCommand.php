@@ -107,9 +107,7 @@ class CreateCommand extends AbstractCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        
-        $this->handleLocalDatabaseCreationAndImport($output);
-        
+                
         $this->io->section('File system');
         $this->createDirectories();
 

@@ -104,7 +104,7 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
         $remoteHost = $this->inputInterface->getOption('remoteHost');
         $remoteUserName = $this->inputInterface->getOption('remoteUserName');
         
-        $this->io->processing(
+        $this->io->processingStart(
             sprintf(
                 'Checking remote db access (%s@%s)',
                 $remoteUserName,
@@ -122,7 +122,7 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
             throw new \Exception($process->getErrorOutput(), 1502039256);
         }
         
-        $this->io->ok();
+        $this->io->processingEnd('ok');
         return true;
     }
     

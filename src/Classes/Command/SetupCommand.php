@@ -5,6 +5,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use GlowPointZero\LocalDevTools\LocalConfiguration;
 use GlowPointZero\LocalDevTools\Command\Configuration\DiagnoseCommand;
+use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
 
 class SetupCommand extends AbstractCommand
 {
@@ -18,15 +19,23 @@ class SetupCommand extends AbstractCommand
     public function execute(InputInterface $input, OutputInterface $output)
     {
         
+        $this->io->processingStart('Loading local configuration');
         // Load current configuration
         try {
             $localConfiguration = $this->localConfiguration->getAll();
-        } catch (Exception $ex) {
+            $this->io->processingEnd('ok');
+        } catch (\Exception $ex) {
+            $localConfiguration = [];
+            $this->io->say('Doesn\'t exist yet!', DevToolsStyle::SAY_STYLE_WARNING, true, false);
         }
         
         // Iterate through settings and ask to set each one
-        foreach ($localConfiguration as $configurationKey => $configurationValue) {
-            $configurationValue = $this->io->ask(LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$configurationKey], $configurationValue);
+        foreach (array_keys(LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS) as $configurationKey) {
+            $configurationValue = $this->localConfiguration->get($configurationKey);
+            $configurationValue = $this->io->ask(
+                    LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$configurationKey],
+                    $configurationValue
+            );
             $this->localConfiguration->set($configurationKey, $configurationValue);
         }
         

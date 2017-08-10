@@ -57,7 +57,7 @@ class LocalConfiguration
      */
     public function set($parameter, $value)
     {
-        if (!array_key_exists($parameter, $this->configuration)) {
+        if (!array_key_exists($parameter, self::CONFIGURATION_PARAMETERS_DESCRIPTIONS)) {
             throw new \Exception(
                 sprintf(
                     'Non-existent configuration parameter %s!',
@@ -82,7 +82,7 @@ class LocalConfiguration
         if (!$this->isLoaded) {
             $this->load();
         }
-        if (!array_key_exists($parameter, $this->configuration)) {
+        if (!array_key_exists($parameter, self::CONFIGURATION_PARAMETERS_DESCRIPTIONS)) {
             throw new \Exception(
                 sprintf(
                     'Non-existent configuration parameter %s!',

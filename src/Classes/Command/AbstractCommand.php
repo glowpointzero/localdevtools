@@ -81,8 +81,9 @@ abstract class AbstractCommand extends Command
     {
         $this->inputInterface = $input;
         $this->io = new DevToolsStyle($input, $output);
+        
+        $this->io->title('Running ' . $this->getName() . ' ...');
     }
-    
     
     
     protected function interact(InputInterface $input, OutputInterface $output)

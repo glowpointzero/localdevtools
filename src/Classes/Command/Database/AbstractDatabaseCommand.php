@@ -172,7 +172,7 @@ class AbstractDatabaseCommand extends AbstractCommand
         
         $dumpAbsPath = $dumpPath . DIRECTORY_SEPARATOR . $dumpName;
         
-        $this->io->processing(sprintf('Dumping the database %s (@%s) into "%s"', $databaseName, $host, $dumpAbsPath));
+        $this->io->processingStart(sprintf('Dumping the database %s (@%s) into "%s"', $databaseName, $host, $dumpAbsPath));
 
         $process = $this->processDbCommand(
             $host,
@@ -192,7 +192,7 @@ class AbstractDatabaseCommand extends AbstractCommand
             throw new \Exception('The dump file is empty. Something went wrong.', 1502037652);
         }
         
-        $this->io->ok('dumped.');
+        $this->io->processingEnd('dumped.');
         
         return $dumpAbsPath;
     }
@@ -206,7 +206,7 @@ class AbstractDatabaseCommand extends AbstractCommand
      */
     protected function localDatabaseExists($dbName)
     {
-        $this->io->processing(sprintf('Checking, whether the db "%s" exists on your system', $dbName));
+        $this->io->processingStart(sprintf('Checking, whether the db "%s" exists on your system', $dbName));
         
         $process = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
@@ -223,9 +223,9 @@ class AbstractDatabaseCommand extends AbstractCommand
         $databaseNamePattern = sprintf('/<field name="Database">%s<\/field>/i', $dbName);
         $dbExists = preg_match($databaseNamePattern, $process->getOutput());
         if ($dbExists) {
-            $this->io->write('it does!', true);
+            $this->io->processingEnd('it does!');
         } else {
-            $this->io->write('it doesn\'t!', true);
+            $this->io->processingEnd('it doesn\'t!');
         }
         
         return $dbExists;
@@ -245,7 +245,7 @@ class AbstractDatabaseCommand extends AbstractCommand
      */
     protected function createLocalDatabase($dbName)
     {
-        $this->io->processing(sprintf('Creating database "%s"', $dbName));
+        $this->io->processingStart(sprintf('Creating database "%s"', $dbName));
         
         $process = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
@@ -258,7 +258,7 @@ class AbstractDatabaseCommand extends AbstractCommand
         if ($process->getExitCode() !== 0) {
             throw new \Exception($process->getErrorOutput(), 1502039452);
         }
-        $this->io->ok('created');
+        $this->io->processingEnd('created');
         return true;
     }
     
@@ -276,7 +276,7 @@ class AbstractDatabaseCommand extends AbstractCommand
         $randomPassword = StringUtility::generateRandomString(6);
         $userAndHostCombo = sprintf('\'%s\'@\'%%\'', $userName); // 'username'@'%'
         
-        $this->io->processing(sprintf('Creating user %s for db "%s"', $userName, $databaseName));
+        $this->io->processingStart(sprintf('Creating user %s for db "%s"', $userName, $databaseName));
         
         $grantPrivilegesProcess = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
@@ -293,7 +293,7 @@ class AbstractDatabaseCommand extends AbstractCommand
             throw new \Exception($grantPrivilegesProcess->getErrorOutput(), 1502040558);
         }
         
-        $this->io->ok();
+        $this->io->processingEnd('ok');
         $this->io->success(sprintf('New user/password: %s / %s', $userName, $randomPassword));
         
         // Re-set current option values for 'localDatabaseName', user name and
@@ -312,7 +312,7 @@ class AbstractDatabaseCommand extends AbstractCommand
             }
         }
         
-        $this->io->processing(sprintf('Granting the user %s all privileges', $userName));
+        $this->io->processingStart(sprintf('Granting the user %s all privileges', $userName));
         $grantPrivilegesProcess = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
             $this->inputInterface->getOption('localRootUserName'),
@@ -329,7 +329,7 @@ class AbstractDatabaseCommand extends AbstractCommand
             throw new \Exception($grantPrivilegesProcess->getErrorOutput(), 1502040602);
         }
         
-        $this->io->ok('All privileges granted.', true);
+        $this->io->processingEnd('All privileges granted.');
         
         return $randomPassword;
     }
@@ -368,7 +368,7 @@ class AbstractDatabaseCommand extends AbstractCommand
      */
     protected function localDatabaseUserExists($dbUserName)
     {
-        $this->io->processing(sprintf('Checking, whether the db user "%s" exists on your system', $dbUserName));
+        $this->io->processingStart(sprintf('Checking, whether the db user "%s" exists on your system', $dbUserName));
 
         $process = $this->processDbCommand(
             $this->inputInterface->getOption('localHost'),
@@ -392,9 +392,9 @@ class AbstractDatabaseCommand extends AbstractCommand
         
         $userExists = $matches[1][0] > 0;
         if ($userExists) {
-            $this->io->write('it does!', true);
+            $this->io->processingEnd('it does!');
         } else {
-            $this->io->write('it doesn\'t!', true);
+            $this->io->processingEnd('it doesn\'t!');
         }
         
         return $userExists;
@@ -411,7 +411,7 @@ class AbstractDatabaseCommand extends AbstractCommand
     protected function importDumpToLocalDb($dumpFilePath)
     {
         $localDatabaseName = $this->inputInterface->getOption('localDatabaseName');
-        $this->io->processing(
+        $this->io->processingStart(
             sprintf(
                 'Importing dump file %s into local database %s',
                 $dumpFilePath,
@@ -435,7 +435,7 @@ class AbstractDatabaseCommand extends AbstractCommand
             throw new \Exception($importProcess->getErrorOutput(), 1502037658);
         }
         
-        $this->io->ok('done.');
+        $this->io->processingEnd('done.');
         return true;
     }
     

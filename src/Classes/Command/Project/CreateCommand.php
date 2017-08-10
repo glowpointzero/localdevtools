@@ -142,14 +142,14 @@ class CreateCommand extends AbstractCommand
         // Project root directory
         $projectRoot = $this->getProjectRootDirectory();
         
-        $this->io->processing(sprintf('Creating project root directory %s', $projectRoot));
+        $this->io->processingStart(sprintf('Creating project root directory %s', $projectRoot));
         if ($this->fileSystem->exists($projectRoot)) {
             $this->io->warning('This directory already exists.');
             $this->letUserDecideOnContinuing();
         }
         try {
             $this->fileSystem->mkdir($projectRoot);
-            $this->io->ok();
+            $this->io->processingEnd('ok');
         } catch (\Exception $exception) {
             $this->io->error($exception->getMessage());
             $this->letUserDecideOnContinuing();
@@ -159,14 +159,14 @@ class CreateCommand extends AbstractCommand
         // versioned, excluding logs, etc.)
         $projectFilesRoot = $this->getProjectFilesRootDirectory();
         
-        $this->io->processing(sprintf('Creating project files root directory %s', $projectFilesRoot));
+        $this->io->processingStart(sprintf('Creating project files root directory %s', $projectFilesRoot));
     
         if ($this->fileSystem->exists($projectFilesRoot)) {
-            $this->io->ok('already exists. Ok!');
+            $this->io->processingEnd('already exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($projectFilesRoot);
-                $this->io->ok();
+                $this->io->processingEnd('ok');
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $this->letUserDecideOnContinuing();
@@ -177,14 +177,14 @@ class CreateCommand extends AbstractCommand
         $logsDirectory = $projectRoot . DIRECTORY_SEPARATOR . self::LOGS_DIRECTORY;
         $this->additionalVhostPlaceholders['logsDirectory'] = $logsDirectory;
         
-        $this->io->processing(sprintf('Creating logs directory %s', $logsDirectory));
+        $this->io->processingStart(sprintf('Creating logs directory %s', $logsDirectory));
 
         if ($this->fileSystem->exists($logsDirectory)) {
-            $this->io->ok('already exists. Ok!');
+            $this->io->processingEnd('already exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($logsDirectory);
-                $this->io->ok();
+                $this->io->processingEnd('ok');
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $this->letUserDecideOnContinuing();
@@ -194,14 +194,14 @@ class CreateCommand extends AbstractCommand
         // Document root directory a.k.a. "public html"
         $documentRoot = $this->getDocumentRootDirectory();
         $this->additionalVhostPlaceholders['documentRoot'] = $documentRoot;
-        $this->io->processing(sprintf('Creating public html directory %s', $documentRoot));
+        $this->io->processingStart(sprintf('Creating public html directory %s', $documentRoot));
 
         if ($this->fileSystem->exists($documentRoot)) {
-            $this->io->ok('already exists. Ok!');
+            $this->io->processingEnd('already exists. Ok!');
         } else {
             try {
                 $this->fileSystem->mkdir($documentRoot);
-                $this->io->ok();
+                $this->io->processingEnd('ok');
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $this->letUserDecideOnContinuing();
@@ -280,10 +280,10 @@ class CreateCommand extends AbstractCommand
             $this->io->warning(sprintf('The vhost target file exists, configuration will be added to this file.'));
             $templateContents = PHP_EOL . PHP_EOL . $templateContents;
         }
-        $this->io->processing(sprintf('Writing vhost configuration to "%s"', $vhostConfigurationPath));
+        $this->io->processingStart(sprintf('Writing vhost configuration to "%s"', $vhostConfigurationPath));
         
         $this->fileSystem->appendToFile($vhostConfigurationPath, $templateContents);
-        $this->io->ok();
+        $this->io->processingEnd('ok');
     }
     
     
@@ -294,7 +294,7 @@ class CreateCommand extends AbstractCommand
     protected function extendHostsFile()
     {
         $hostsFilePath = $this->localConfiguration->get('hostsFilePath');
-        $this->io->processing(sprintf('Extending hosts file, appending new local domains (%s)', $hostsFilePath));
+        $this->io->processingStart(sprintf('Extending hosts file, appending new local domains (%s)', $hostsFilePath));
 
         if (!@is_file($hostsFilePath)) {
             throw new \Exception(sprintf('The hosts file doesn\'t exist under the given path ("%s")!', $hostsFilePath), 1502042022);
@@ -313,7 +313,7 @@ class CreateCommand extends AbstractCommand
         
         file_put_contents($hostsFilePath, $newDomainsString, FILE_APPEND);
         
-        $this->io->ok();
+        $this->io->processingEnd('ok');
     }
     
     
@@ -458,7 +458,7 @@ class CreateCommand extends AbstractCommand
         
         $gitBranch = $this->inputInterface->getOption('gitRepositoryBranch');
         
-        $this->io->processing(sprintf('Cloning Git repository "%s"', $gitRepository));
+        $this->io->processingStart(sprintf('Cloning Git repository "%s"', $gitRepository));
         $cloneProcess = new Process(
             sprintf(
                 'git clone%s "%s" "%s"',
@@ -472,7 +472,7 @@ class CreateCommand extends AbstractCommand
             $this->io->error($cloneProcess->getOutput());
             return false;
         } else {
-            $this->io->ok();
+            $this->io->processingEnd('ok');
             return true;
         }
     }
@@ -497,7 +497,7 @@ class CreateCommand extends AbstractCommand
             $composerAction > 1 ? 'update' : 'install'
         );
         
-        $this->io->processing(sprintf('Running composer action "%s"', $composerCommand));
+        $this->io->processingStart(sprintf('Running composer action "%s"', $composerCommand));
 
         $composerProcess = new Process($composerCommand);
         $composerProcess->run();
@@ -505,7 +505,7 @@ class CreateCommand extends AbstractCommand
             $this->io->error($composerProcess->getOutput());
             return false;
         } else {
-            $this->io->ok();
+            $this->io->processingEnd('ok');
             return true;
         }
     }

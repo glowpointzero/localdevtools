@@ -60,7 +60,7 @@ class ImportCommand extends AbstractDatabaseCommand
         $dbExists = $this->localDatabaseExists($dbName);
         
         if ($dbExists && $this->inputInterface->getOption('dumpCurrent') !== false) {
-            $this->io->write('Backing up existing database...', true);
+            $this->io->section('Backing up existing database');
             $dbDumpPath = $this->createDbDump(
                 $this->inputInterface->getOption('localHost'),
                 $this->inputInterface->getOption('localUserName'),

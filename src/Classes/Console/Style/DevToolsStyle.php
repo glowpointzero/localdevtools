@@ -3,38 +3,94 @@ namespace GlowPointZero\LocalDevTools\Console\Style;
 
 class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
 {
-      
+ 
+    var $lineWidth = 80;
+    var $linePadding = '    ';
+    
+    const SAY_STYLE_DEFAULT = 'fg=white;bg=black';
+    const SAY_STYLE_TITLE = 'fg=black;bg=cyan';
+    const SAY_STYLE_SECTION = 'fg=black;bg=white';
+    const SAY_STYLE_OK = 'fg=green;bg=black';
+    const SAY_STYLE_SUCCESS = 'fg=black;bg=green';
+    const SAY_STYLE_WARNING = 'fg=black;bg=yellow';
+    const SAY_STYLE_ERROR = 'fg=black;bg=red';
+    
+    
+    public function title($message)
+    {
+        $this->say(PHP_EOL . PHP_EOL . $message . PHP_EOL . PHP_EOL, self::SAY_STYLE_TITLE);
+    }
+    
+    public function section($message)
+    {
+        $this->say(PHP_EOL . $message . PHP_EOL, self::SAY_STYLE_SECTION);
+    }
+    
+    public function error($message)
+    {
+        $this->say(PHP_EOL . $message . PHP_EOL, self::SAY_STYLE_ERROR);
+    }
+    
+    public function warning($message)
+    {
+        $this->say(PHP_EOL . $message . PHP_EOL, self::SAY_STYLE_WARNING);
+    }
+    
     /**
-     * Outputs a 'processing... ' message
+     * Tell the user a process has started.
      * 
      * @param string $message
      */
-    public function processing($message)
+    public function processingStart($message)
     {
         $lastCharacter = substr($message, -1);
         if ( (!in_array($lastCharacter, ['.', '!', ' ', '?'])) ) {
             $message .= '... ';
         }
-        $this->write(' '. $message);
+        $this->say($this->linePadding . $message, self::SAY_STYLE_DEFAULT, true, false);
     }
     
+    /**
+     * Tell the user a previously started process has ended successfully.
+     * 
+     * @param string $message
+     */
+    public function processingEnd($message)
+    {
+        $this->say($message, self::SAY_STYLE_OK, true, false);
+    }
     
     /**
-     * Writes a 'ok' message to the output, inline per default
+     * Say something to the user in different alert levels (styles),
+     * inline or 'en bloc'. This is the raw(er) command for
+     * warning() error(), etc.
      * 
      * @param type $message
+     * @param type $style
      * @param type $inline
-     * @param type $appendNewLine
+     * @param type $addMargins
      */
-    public function ok($message = 'ok', $inline = true, $appendNewLine = true)
+    public function say($message, $style = self::SAY_STYLE_DEFAULT, $inline = false, $addMargins = true)
     {
-        $this->write(
-            sprintf(
-                '<info>%s%s</info>',
-                $inline ? '' : ' ',
-                $message
-            ),
-            $appendNewLine
-        );
+        $lines = explode(PHP_EOL, wordwrap($message, $this->lineWidth, PHP_EOL, true));
+        
+        foreach ($lines as $lineNo => $line) {
+            if (!$inline) {
+                $line = str_pad(
+                    $line,
+                    $this->lineWidth-strlen($this->linePadding)*2
+                );
+                $line = $this->linePadding . $line . $this->linePadding;
+            }
+            
+            
+            $line = sprintf('<%s>%s</> ', $style, $line);
+            $lines[$lineNo] = $line;
+        }
+        if ($addMargins) {
+            array_unshift($lines, '');
+            $lines[] = '';
+        }
+        $this->write($lines, !$inline);
     }
 }

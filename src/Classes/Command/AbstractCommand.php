@@ -8,7 +8,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 use GlowPointZero\LocalDevTools\LocalConfiguration;
 use GlowPointZero\LocalDevTools\Component\Filesystem;
-use GlowPointZero\LocalDevTools\Style\DevToolsStyle;
+use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
 
 abstract class AbstractCommand extends Command
 {
@@ -80,7 +80,7 @@ abstract class AbstractCommand extends Command
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->inputInterface = $input;
-        $this->io = new \GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle($input, $output);
+        $this->io = new DevToolsStyle($input, $output);
     }
     
     
@@ -290,13 +290,13 @@ abstract class AbstractCommand extends Command
             if (preg_match('/passw/i', $optionName)) {
                 $newValue = $this->io->askHidden(
                     $optionDefinition['description'],
-                    function($inputValue) { return $inputValue; }
+                    function($inputValue) { return trim($inputValue); }
                 );
             } else {
                 $newValue = $this->io->ask(
                     $optionDefinition['description'],
                     $optionDefinition['default'],
-                    function($inputValue) { return $inputValue; }
+                    function($inputValue) { return trim($inputValue); }
                 );
              }
         }

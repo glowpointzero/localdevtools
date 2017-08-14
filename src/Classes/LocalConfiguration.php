@@ -23,7 +23,8 @@ class LocalConfiguration
         'projectsRootPath' => '',
         'hostsFilePath' => '',
         'hostsFileDomainPattern' => '((((projectKey)))).local www.((((projectKey)))).local ((((projectKey)))).lo www.((((projectKey)))).lo',
-        'serverRestartCommand' => ''
+        'serverRestartCommand' => '',
+        'symlinks' => []
     ];
     const CONFIGURATION_PARAMETERS_DESCRIPTIONS = [
         'hostConfigurationFilesRootPath' => 'Directory path of your virtual host *.conf files.',
@@ -32,6 +33,7 @@ class LocalConfiguration
         'hostsFilePath' => 'Path to your hosts file.',
         'hostsFileDomainPattern' => 'Pattern used to extend your hosts file when creating new projects. Individual domains may be added during project setup.',
         'serverRestartCommand' => 'Command to restart your local webserver with',
+        'symlinks' => 'command:link:setup'
     ];
     
     

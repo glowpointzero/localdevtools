@@ -16,6 +16,8 @@ $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\CreateComm
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\ImportCommand());
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\DumpCommand());
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Database\CopyFromRemoteCommand());
+$localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Link\LinkCommand());
+$localDevTools->add(new \GlowPointZero\LocalDevTools\Command\Link\LinkSetupCommand());
 $localDevTools->add(new \GlowPointZero\LocalDevTools\Command\InfoCommand());
 
 $localDevTools->setDefaultCommand(\GlowPointZero\LocalDevTools\Command\InfoCommand::COMMAND_NAME);

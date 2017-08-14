@@ -13,6 +13,16 @@ class SetupCommand extends AbstractCommand
     const COMMAND_NAME = 'setup';
     const COMMAND_DESCRIPTION = 'Sets up your local dev environment tools.';    
     
+    public function configure()
+    {
+        parent::configure();
+    }
+    
+    public function interact(InputInterface $input, OutputInterface $output)
+    {
+        // Prevent loadig and validating local configuration
+    }
+    
     /**
      * {@inheritdoc}
      */
@@ -24,18 +34,27 @@ class SetupCommand extends AbstractCommand
         try {
             $localConfiguration = $this->localConfiguration->getAll();
             $this->io->processingEnd('ok');
-        } catch (\Exception $ex) {
+        } catch (\Exception $exception) {
             $localConfiguration = [];
             $this->io->say('Doesn\'t exist yet!', DevToolsStyle::SAY_STYLE_WARNING, true, false);
         }
         
         // Iterate through settings and ask to set each one
-        foreach (array_keys(LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS) as $configurationKey) {
+        foreach (LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS as $configurationKey => $configurationDescription) {
+
             $configurationValue = $this->localConfiguration->get($configurationKey);
-            $configurationValue = $this->io->ask(
-                    LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$configurationKey],
+            if (substr($configurationDescription, 0, 8) === 'command:') {
+                $command = substr($configurationDescription, 8);
+                $configurationCommand = $this->getApplication()->find($command);
+                $configurationCommand->run($input, $output);
+                $configurationValue = $configurationCommand->getResultValue('resultingConfiguration');
+            } else {
+                $configurationValue = $this->io->ask(
+                    $configurationDescription,
                     $configurationValue
-            );
+                );
+            }
+            
             $this->localConfiguration->set($configurationKey, $configurationValue);
         }
         
@@ -51,7 +70,8 @@ class SetupCommand extends AbstractCommand
                 sprintf(
                     'Would you like to create a symlink to your project roots path'
                         . ' (%s)'
-                        . 'for easier access? If so, provide a path here',
+                        . ' for easier access? If so, provide a path you\'d like to'
+                        . ' access it from.',
                     $this->localConfiguration->get('projectsRootPath')
                 ),
                 null,
@@ -62,10 +82,8 @@ class SetupCommand extends AbstractCommand
             }
         }
         
-        
-        $runDiagnose = $this->io->confirm('We\'re done here. Run configuration diagnose (it won\'t hurt)?');
-        if ($runDiagnose) {
-            $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);
-        }
+        $runDiagnose = $this->io->success('We\'re done here. Running diagnose in 3 seconds...');
+        sleep(3);
+        $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);
     }
 }

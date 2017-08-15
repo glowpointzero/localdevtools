@@ -36,6 +36,11 @@ class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
         $this->say(PHP_EOL . $message . PHP_EOL, self::SAY_STYLE_WARNING);
     }
     
+    public function caution($message)
+    {
+        $this->say(PHP_EOL . $message . PHP_EOL, self::SAY_STYLE_WARNING);
+    }
+    
     /**
      * Tell the user a process has started.
      * 
@@ -72,6 +77,9 @@ class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
      */
     public function say($message, $style = self::SAY_STYLE_DEFAULT, $inline = false, $addMargins = true)
     {
+        if ($style === null) {
+            $style = self::SAY_STYLE_DEFAULT;
+        }
         $lines = explode(PHP_EOL, wordwrap($message, $this->lineWidth, PHP_EOL, true));
         
         foreach ($lines as $lineNo => $line) {

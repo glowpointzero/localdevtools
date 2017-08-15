@@ -43,9 +43,9 @@ class SetupCommand extends AbstractCommand
         foreach (LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS as $configurationKey => $configurationDescription) {
 
             $configurationValue = $this->localConfiguration->get($configurationKey);
-            if (substr($configurationDescription, 0, 8) === 'command:') {
-                $command = substr($configurationDescription, 8);
-                $configurationCommand = $this->getApplication()->find($command);
+            
+            if (class_exists($configurationDescription)) {
+                $configurationCommand = $this->getApplication()->find($configurationDescription::COMMAND_NAME);
                 $configurationCommand->run($input, $output);
                 $configurationValue = $configurationCommand->getResultValue('resultingConfiguration');
             } else {

@@ -20,9 +20,15 @@ class DiagnoseCommand extends AbstractCommand
         $localConfiguration = $this->localConfiguration->getAll();
         $localConfigurationTableValues = [];
         foreach($localConfiguration as $localConfigurationKey => $localConfigurationValue) {
+            $description = \GlowPointZero\LocalDevTools\LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$localConfigurationKey];
+            if (class_exists($description)) {
+                $configurationCommand = $this->getApplication()->find($description::COMMAND_NAME);
+                $description = $configurationCommand->getConfigurationTitle();
+                $localConfigurationValue = $configurationCommand->getConfiguredValues();
+            }
             $localConfigurationTableValues[] = [
                 $localConfigurationKey,
-                \GlowPointZero\LocalDevTools\LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$localConfigurationKey],
+                $description,
                 $localConfigurationValue
             ];
         }

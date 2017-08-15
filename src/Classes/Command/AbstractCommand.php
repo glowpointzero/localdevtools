@@ -91,7 +91,6 @@ abstract class AbstractCommand extends Command
         parent::interact($input, $output);
         
         $this->localConfiguration->load();
-        $this->localConfiguration->validate();
         
         $this->validateAllOptions();
     }

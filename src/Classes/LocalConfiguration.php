@@ -33,7 +33,7 @@ class LocalConfiguration
         'hostsFilePath' => 'Path to your hosts file.',
         'hostsFileDomainPattern' => 'Pattern used to extend your hosts file when creating new projects. Individual domains may be added during project setup.',
         'serverRestartCommand' => 'Command to restart your local webserver with',
-        'symlinks' => 'command:link:setup'
+        'symlinks' => Command\Link\LinkSetupCommand::class
     ];
     
     
@@ -42,6 +42,7 @@ class LocalConfiguration
      */
     public function __construct(Filesystem $fileSystem)
     {
+        
         $this->fileSystem = $fileSystem;
         $this->configuration['hostConfigurationTemplatesRootPath'] = 
             LOCAL_DEV_TOOLS_ROOT 
@@ -171,13 +172,5 @@ class LocalConfiguration
     public function save()
     {
         $this->fileSystem->dumpFile($this->getConfigurationFilePathAbs(), json_encode($this->configuration));
-    }
-    
-    /**
-     * @todo
-     */
-    public function validate()
-    {
-        
     }
 }

@@ -4,8 +4,9 @@ namespace GlowPointZero\LocalDevTools\Command\Link;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use GlowPointZero\LocalDevTools\Command\SetupCommandInterface;
 
-class LinkSetupCommand extends AbstractCommand
+class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
 {
     
     const COMMAND_NAME = 'link:setup';
@@ -14,13 +15,27 @@ class LinkSetupCommand extends AbstractCommand
     var $symlinkShortcuts = [];
     
     
+    public function getConfiguredValues()
+    {
+        return $this->listCurrentSymlinkShortcuts(false);
+    }
+    
+    public function getConfigurationTitle()
+    {
+        return 'Pre-configured symlink shortcuts';
+    }
+    
+    public function __construct($name = null)
+    {
+        parent::__construct($name);
+        $this->symlinkShortcuts = $this->localConfiguration->get('symlinks');
+    }
+    
     /**
      * {@inheritdoc}
      */
     public function execute(InputInterface $input, OutputInterface $output)
-    {
-        $this->symlinkShortcuts = $this->localConfiguration->get('symlinks');
-        
+    {        
         $this->io->say('Let\'s set up your symlink shortcuts!');
         
         $choices = ['list all', 'add', 'remove', 'done!'];
@@ -51,28 +66,35 @@ class LinkSetupCommand extends AbstractCommand
         
         $this->setResultValue('resultingConfiguration', $this->symlinkShortcuts);
     }
-   
+    
     
     /**
      * Lists all currently registered symlink shortcuts
      * 
-     * @return void
+     * @param boolean $directOutput Output content directly (return alternatively)
+     * @return string|void
      */
-    protected function listCurrentSymlinkShortcuts()
+    protected function listCurrentSymlinkShortcuts($directOutput = true)
     {
+        $content = '';
         if (count($this->symlinkShortcuts) === 0) {
-            $this->io->say('(no entries yet)');
-            return;
+            $content = '(no entries yet)';
+        } else {
+            foreach ($this->symlinkShortcuts as $symlink) {
+                $content .= sprintf(
+                   'Identifier: %s ' . PHP_EOL . 'Source: %s ' . PHP_EOL . 'Target: %s',
+                    $symlink['identifier'],
+                    $symlink['source'],
+                    $symlink['target']
+                ) . PHP_EOL . PHP_EOL;
+                
+            }
         }
-        foreach ($this->symlinkShortcuts as $symlink) {
-            $symlinkText = sprintf(
-               'Identifier: %s ' . PHP_EOL . 'Source: %s ' . PHP_EOL . 'Target: %s',
-                $symlink['identifier'],
-                $symlink['source'],
-                $symlink['target']
-            );
-            $this->io->say($symlinkText);
-            $this->io->newLine();
+        
+        if ($directOutput) {
+            $this->io->say($content);
+        } else {
+            return $content;
         }
     }
     

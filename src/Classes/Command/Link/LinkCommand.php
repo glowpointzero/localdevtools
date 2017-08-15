@@ -12,13 +12,12 @@ class LinkCommand extends AbstractCommand
     const COMMAND_NAME = 'link';
     const COMMAND_DESCRIPTION = 'Create a symlink quickly from your custom defined set';
     
-    
-    
     /**
      * {@inheritdoc}
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        // Check, whether there are symlinks set up at all
         while (count($this->localConfiguration->get('symlinks')) === 0) {
             $this->io->error('No symlinks set up yet');
             $setUpNow = $this->io->confirm('Set up now?');
@@ -29,6 +28,8 @@ class LinkCommand extends AbstractCommand
                 return;
             }
         }
+        
+        // Prepare all symlink shortcut and present as option
         $symlinks = $this->localConfiguration->get('symlinks');
         $options = [];
         foreach ($symlinks as $symlinkShortcut) {
@@ -40,6 +41,7 @@ class LinkCommand extends AbstractCommand
             return;
         }
         
+        // Create symlink
         $linkConfiguration = array_values($symlinks)[$chosenOption];
         $this->io->processingStart(
             sprintf(
@@ -48,10 +50,13 @@ class LinkCommand extends AbstractCommand
                 $linkConfiguration['target']
             )
         );
+        // Abort, if the target doesn't exist
         if (!file_exists($linkConfiguration['target'])) {
             $this->io->error(sprintf('The target "%s" doesn\'t exist!', $linkConfiguration['target']));
             return 1;
         }
+        // Check, whether source file already exists and if so
+        // let the user decide how to continue.
         $sourceFileExists = file_exists($linkConfiguration['source']);
         if ($sourceFileExists && !is_link($linkConfiguration['source'])) {
             $this->io->warning(sprintf('The source path "%s" exists (and is not a symlink).', $linkConfiguration['source']));
@@ -72,9 +77,15 @@ class LinkCommand extends AbstractCommand
             }
             $this->io->processingStart('Creating symlink');
         }
-        if ($sourceFileExists) {
+        
+        // Delete source file
+        if (is_dir($linkConfiguration['source'])) {
             rmdir($linkConfiguration['source']);
+        } else {
+            unlink($linkConfiguration['source']);
         }
+        
+        // Create symlink (finally!)
         if (@symlink($linkConfiguration['target'], $linkConfiguration['source'])) {
             $this->io->processingEnd('ok');
         } else {

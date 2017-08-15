@@ -14,6 +14,9 @@ class LinkSetupCommand extends AbstractCommand
     var $symlinkShortcuts = [];
     
     
+    /**
+     * {@inheritdoc}
+     */
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $this->symlinkShortcuts = $this->localConfiguration->get('symlinks');
@@ -50,7 +53,11 @@ class LinkSetupCommand extends AbstractCommand
     }
    
     
-    
+    /**
+     * Lists all currently registered symlink shortcuts
+     * 
+     * @return void
+     */
     protected function listCurrentSymlinkShortcuts()
     {
         if (count($this->symlinkShortcuts) === 0) {
@@ -70,6 +77,11 @@ class LinkSetupCommand extends AbstractCommand
     }
     
     
+    /**
+     * Lets the user set up a new symlink shortcut
+     * 
+     * @return void
+     */
     protected function addSymlinkShortcut()
     {
         $identifier = $this->io->ask('Unique identifier', '');
@@ -95,6 +107,11 @@ class LinkSetupCommand extends AbstractCommand
     }
     
     
+    /**
+     * Lets the user remove a specific symlink shortcut
+     * 
+     * @return void
+     */
     protected function removeSymlinkShortcut()
     {
         $options = [];

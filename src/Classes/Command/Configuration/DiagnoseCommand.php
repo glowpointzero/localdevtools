@@ -26,26 +26,20 @@ class DiagnoseCommand extends AbstractCommand
                 $description = $configurationCommand->getConfigurationTitle();
                 $localConfigurationValue = $configurationCommand->getConfiguredValues();
             }
-            $localConfigurationTableValues[] = [
-                $localConfigurationKey,
-                $description,
-                $localConfigurationValue
-            ];
+            
+            $this->io->section($localConfigurationKey . PHP_EOL . '(' . $description . ')');
+            $this->io->say($localConfigurationValue);
         }
-        $this->io->table(
-            ['Parameter', 'Description', 'Current local value'],
-            $localConfigurationTableValues
-        );
         
-        $this->io->note(
+        $this->io->warning(
             sprintf('Make sure you wildcard your vhosts directory! '. PHP_EOL
                     . 'You\'ll need to include your configured directory'
                     . ' "%s" in your vhosts config.'. PHP_EOL
                     . ' On apache you might want to add'. PHP_EOL . PHP_EOL
                     . '   %s '. PHP_EOL . PHP_EOL
                     . 'to your httpd-vhosts.conf!',
-                $this->localConfiguration->get('hostsFilePath'),
-                'Include "'. $this->localConfiguration->get('hostsFilePath') . DIRECTORY_SEPARATOR . '*.conf"'
+                $this->localConfiguration->get('hostConfigurationFilesRootPath'),
+                'Include "'. $this->localConfiguration->get('hostConfigurationFilesRootPath') . DIRECTORY_SEPARATOR . '*.conf"'
             )
         );
         

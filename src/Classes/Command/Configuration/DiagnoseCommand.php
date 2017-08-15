@@ -4,6 +4,7 @@ namespace GlowPointZero\LocalDevTools\Command\Configuration;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
 
 class DiagnoseCommand extends AbstractCommand
 {
@@ -19,19 +20,17 @@ class DiagnoseCommand extends AbstractCommand
     {
         $localConfiguration = $this->localConfiguration->getAll();
         $localConfigurationTableValues = [];
-        foreach($localConfiguration as $localConfigurationKey => $localConfigurationValue) {
-            $description = \GlowPointZero\LocalDevTools\LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$localConfigurationKey];
-            if (class_exists($description)) {
-                $configurationCommand = $this->getApplication()->find($description::COMMAND_NAME);
-                $description = $configurationCommand->getConfigurationTitle();
-                $localConfigurationValue = $configurationCommand->getConfiguredValues();
+        foreach($localConfiguration as $configurationKey => $configurationValue) {
+            $description = \GlowPointZero\LocalDevTools\LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$configurationKey];
+            $this->io->section($configurationKey . PHP_EOL . '(' . $description . ')');
+            if (is_string($configurationValue)) {
+                $this->io->say(sprintf('Current value: ' . PHP_EOL . '%s', $configurationValue));
             }
-            
-            $this->io->section($localConfigurationKey . PHP_EOL . '(' . $description . ')');
-            $this->io->say($localConfigurationValue);
+            $this->testConfigurationValue($configurationKey, $configurationValue);
+            sleep(1);
         }
         
-        $this->io->warning(
+        $this->io->caution(
             sprintf('Make sure you wildcard your vhosts directory! '. PHP_EOL
                     . 'You\'ll need to include your configured directory'
                     . ' "%s" in your vhosts config.'. PHP_EOL
@@ -41,8 +40,43 @@ class DiagnoseCommand extends AbstractCommand
                 $this->localConfiguration->get('hostConfigurationFilesRootPath'),
                 'Include "'. $this->localConfiguration->get('hostConfigurationFilesRootPath') . DIRECTORY_SEPARATOR . '*.conf"'
             )
-        );
-        
-        // TODO: Do some real checks here!
+        );     
+    }
+    
+    
+    /**
+     * Tests given configuration value
+     * 
+     * Tests given value for empty value and - if based on the
+     * configuration key, it seems like it is a path, checks
+     * the file path.
+     * 
+     * @param string $configurationKey
+     * @param string $configurationValue
+     * @return void
+     */
+    protected function testConfigurationValue($configurationKey, $configurationValue) {
+        if ($configurationKey === 'identifier') {
+            $this->io->say(sprintf('"%s":', $configurationValue), null, false, false);
+        }
+
+        if (is_array($configurationValue)) {
+            foreach ($configurationValue as $subConfigurationKey => $subConfigurationValue) {
+                $this->testConfigurationValue($subConfigurationKey, $subConfigurationValue);
+            }
+            $this->io->newLine();
+            return;
+        } else {
+            $this->io->processingStart(sprintf('Testing "%s"', $configurationKey));
+        }
+
+        if (empty($configurationValue)) {
+            $this->io->say('is empty!', DevToolsStyle::SAY_STYLE_WARNING, false, false);
+        } elseif (preg_match('/(source|target|path)$/i', $configurationKey) && !file_exists($configurationValue)) {
+            $this->io->say(sprintf('file "%s" doesn\'t exist!', $configurationValue), DevToolsStyle::SAY_STYLE_ERROR, false, false);
+        } else {
+            $this->io->processingEnd('ok');
+            $this->io->newLine();
+        }
     }
 }

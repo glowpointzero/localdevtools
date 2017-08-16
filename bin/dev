@@ -1,3 +1,4 @@
 #!/usr/bin/env php
 <?php
+$GLOBALS['LOCAL_DEV_TOOLS_EXEC_PATH'] = __DIR__;
 require realpath(__DIR__ . '/../src/bootstrap.php');

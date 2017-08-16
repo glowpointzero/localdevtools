@@ -8,7 +8,7 @@
     },
     "autoload": {
         "psr-4": {
-            "GlowPointZero\\LocalDevTools\\": "src/Classes"
+            "Glowpointzero\\LocalDevTools\\": "src/Classes"
         }
     }
 }

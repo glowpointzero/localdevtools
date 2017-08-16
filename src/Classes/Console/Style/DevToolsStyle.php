@@ -1,5 +1,5 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Console\Style;
+namespace Glowpointzero\LocalDevTools\Console\Style;
 
 class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
 {

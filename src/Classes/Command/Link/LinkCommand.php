@@ -1,10 +1,10 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Link;
+namespace Glowpointzero\LocalDevTools\Command\Link;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\ArrayInput;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
 
 class LinkCommand extends AbstractCommand
 {

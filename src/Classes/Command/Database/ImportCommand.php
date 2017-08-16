@@ -1,12 +1,12 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Database;
+namespace Glowpointzero\LocalDevTools\Command\Database;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Process\Process;
 
-use GlowPointZero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
+use Glowpointzero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
 
 /**
  * Creates database and corresponding user

@@ -1,14 +1,14 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command;
+namespace Glowpointzero\LocalDevTools\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 
-use GlowPointZero\LocalDevTools\LocalConfiguration;
-use GlowPointZero\LocalDevTools\Component\Filesystem;
-use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
+use Glowpointzero\LocalDevTools\LocalConfiguration;
+use Glowpointzero\LocalDevTools\Component\Filesystem;
+use Glowpointzero\LocalDevTools\Console\Style\DevToolsStyle;
 
 abstract class AbstractCommand extends Command
 {
@@ -59,8 +59,8 @@ abstract class AbstractCommand extends Command
     
     protected function configure()
     {
-        $this->fileSystem = new \GlowPointZero\LocalDevTools\Console\Component\Filesystem();
-        $this->localConfiguration = new \GlowPointZero\LocalDevTools\LocalConfiguration($this->fileSystem);
+        $this->fileSystem = new \Glowpointzero\LocalDevTools\Console\Component\Filesystem();
+        $this->localConfiguration = new \Glowpointzero\LocalDevTools\LocalConfiguration($this->fileSystem);
         
         $this
             ->setName($this::COMMAND_NAME)

@@ -1,10 +1,10 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Configuration;
+namespace Glowpointzero\LocalDevTools\Command\Configuration;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
-use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Console\Style\DevToolsStyle;
 
 class DiagnoseCommand extends AbstractCommand
 {
@@ -20,7 +20,7 @@ class DiagnoseCommand extends AbstractCommand
         $localConfiguration = $this->localConfiguration->getAll();
         $localConfigurationTableValues = [];
         foreach ($localConfiguration as $configurationKey => $configurationValue) {
-            $description = \GlowPointZero\LocalDevTools\LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$configurationKey];
+            $description = \Glowpointzero\LocalDevTools\LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$configurationKey];
             $this->io->section($configurationKey . PHP_EOL . '(' . $description . ')');
             if (is_string($configurationValue)) {
                 $this->io->say(sprintf('Current value: ' . PHP_EOL . '%s', $configurationValue));

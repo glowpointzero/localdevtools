@@ -1,9 +1,9 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Database;
+namespace Glowpointzero\LocalDevTools\Command\Database;
 
 use Symfony\Component\Process\Process;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
-use GlowPointZero\LocalDevTools\Utility\StringUtility;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Utility\StringUtility;
 
 /**
  * Creates database and corresponding user

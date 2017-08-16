@@ -1,10 +1,10 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command;
+namespace Glowpointzero\LocalDevTools\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
-use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Console\Style\DevToolsStyle;
 
 class InfoCommand extends AbstractCommand
 {

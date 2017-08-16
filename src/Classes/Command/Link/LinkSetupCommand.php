@@ -1,10 +1,10 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Link;
+namespace Glowpointzero\LocalDevTools\Command\Link;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
-use GlowPointZero\LocalDevTools\Command\SetupCommandInterface;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Command\SetupCommandInterface;
 
 class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
 {

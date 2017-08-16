@@ -1,5 +1,5 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Console\Component;
+namespace Glowpointzero\LocalDevTools\Console\Component;
 
 class Filesystem extends \Symfony\Component\Filesystem\Filesystem
 {

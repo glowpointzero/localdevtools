@@ -1,14 +1,14 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Project;
+namespace Glowpointzero\LocalDevTools\Command\Project;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Process\Process;
 
-use GlowPointZero\LocalDevTools\LocalConfiguration;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
-use GlowPointZero\LocalDevTools\Command\Server\RestartCommand;
+use Glowpointzero\LocalDevTools\LocalConfiguration;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Command\Server\RestartCommand;
 
 /**
  * Creates all needed directories, files, etc.
@@ -371,7 +371,7 @@ class CreateCommand extends AbstractCommand
         $createALocalDatabase = $this->io->confirm('Create a local database?');
         while (!$doneCreatingLocalDatabase && $createALocalDatabase) {
             $createLocalCommand = $this->getApplication()->find(
-                    \GlowPointZero\LocalDevTools\Command\Database\CreateCommand::COMMAND_NAME
+                    \Glowpointzero\LocalDevTools\Command\Database\CreateCommand::COMMAND_NAME
             );
             $createLocalCommand->updateDefaultOptionValue(
                 'newDatabaseName',
@@ -406,7 +406,7 @@ class CreateCommand extends AbstractCommand
         $importRemoteDatabase = $this->io->confirm('Import a remote DB to the local database?');
         while (!$doneImportingRemoteDatabase && $importRemoteDatabase) {
             try {
-                $copyFromRemoteCommand = $this->getApplication()->find(\GlowPointZero\LocalDevTools\Command\Database\CopyFromRemoteCommand::COMMAND_NAME);
+                $copyFromRemoteCommand = $this->getApplication()->find(\Glowpointzero\LocalDevTools\Command\Database\CopyFromRemoteCommand::COMMAND_NAME);
                 $copyFromRemoteCommand->run(new ArrayInput($localDatabaseOptions), $output);
                 
                 $doneImportingRemoteDatabase = true;

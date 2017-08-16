@@ -1,5 +1,5 @@
 <?php
-namespace GlowPointZero\LocalDevTools;
+namespace Glowpointzero\LocalDevTools;
 
 use Symfony\Component\Filesystem\Filesystem;
 

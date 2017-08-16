@@ -1,9 +1,9 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Code;
+namespace Glowpointzero\LocalDevTools\Command\Code;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
 
 class FixCommand extends AbstractCommand
 {

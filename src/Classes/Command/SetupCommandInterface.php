@@ -1,5 +1,5 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command;
+namespace Glowpointzero\LocalDevTools\Command;
 
 interface SetupCommandInterface
 {

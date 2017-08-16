@@ -1,5 +1,5 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Utility;
+namespace Glowpointzero\LocalDevTools\Utility;
 
 class StringUtility
 {

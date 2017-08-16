@@ -1,10 +1,10 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Database;
+namespace Glowpointzero\LocalDevTools\Command\Database;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
-use GlowPointZero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
+use Glowpointzero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
 
 /**
  * Copies a database from a remote server to a local one

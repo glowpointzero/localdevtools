@@ -1,10 +1,10 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command\Server;
+namespace Glowpointzero\LocalDevTools\Command\Server;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
-use GlowPointZero\LocalDevTools\Command\AbstractCommand;
+use Glowpointzero\LocalDevTools\Command\AbstractCommand;
 
 class RestartCommand extends AbstractCommand
 {

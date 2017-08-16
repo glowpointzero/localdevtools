@@ -1,11 +1,11 @@
 <?php
-namespace GlowPointZero\LocalDevTools\Command;
+namespace Glowpointzero\LocalDevTools\Command;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use GlowPointZero\LocalDevTools\LocalConfiguration;
-use GlowPointZero\LocalDevTools\Command\Configuration\DiagnoseCommand;
-use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
+use Glowpointzero\LocalDevTools\LocalConfiguration;
+use Glowpointzero\LocalDevTools\Command\Configuration\DiagnoseCommand;
+use Glowpointzero\LocalDevTools\Console\Style\DevToolsStyle;
 
 class SetupCommand extends AbstractCommand
 {

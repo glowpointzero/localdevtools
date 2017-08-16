@@ -11,7 +11,6 @@ use GlowPointZero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
  */
 class DumpCommand extends AbstractDatabaseCommand
 {
-    
     const COMMAND_NAME = 'db:dump';
     const COMMAND_DESCRIPTION = 'Exports a database';
     
@@ -53,7 +52,6 @@ class DumpCommand extends AbstractDatabaseCommand
             null,
             '/^.*$/'
         );
-        
     }
     
     
@@ -62,14 +60,11 @@ class DumpCommand extends AbstractDatabaseCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        
         $this->createDbDump(
             $this->inputInterface->getOption('host'),
             $this->inputInterface->getOption('userName'),
             $this->inputInterface->getOption('password'),
             $this->inputInterface->getOption('databaseName')
-        );        
+        );
     }
-        
-    
 }

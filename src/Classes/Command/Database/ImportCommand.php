@@ -13,7 +13,6 @@ use GlowPointZero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
  */
 class ImportCommand extends AbstractDatabaseCommand
 {
-    
     const COMMAND_NAME = 'db:import';
     const COMMAND_DESCRIPTION = 'Imports a db dump';
     
@@ -44,8 +43,6 @@ class ImportCommand extends AbstractDatabaseCommand
             false,
             [false, true]
         );
-        
-        
     }
     
     
@@ -73,7 +70,10 @@ class ImportCommand extends AbstractDatabaseCommand
             $reallyImport = $this->io->confirm(
                 sprintf(
                     'Really import file %s"%s"%s in to database "%s"?',
-                    PHP_EOL, $importFilePath, PHP_EOL, $dbName
+                    PHP_EOL,
+                    $importFilePath,
+                    PHP_EOL,
+                    $dbName
                 ),
                 false
             );
@@ -85,5 +85,4 @@ class ImportCommand extends AbstractDatabaseCommand
         
         $this->importDumpToLocalDb($importFilePath);
     }
-    
 }

@@ -1,11 +1,12 @@
 <?php
 namespace GlowPointZero\LocalDevTools\Utility;
 
-class StringUtility {
+class StringUtility
+{
     
     /**
      * Generates a random string.
-     * 
+     *
      * @param int $length
      * @param string $characters
      * @return string

@@ -10,7 +10,6 @@ use GlowPointZero\LocalDevTools\Utility\StringUtility;
  */
 class AbstractDatabaseCommand extends AbstractCommand
 {
-    
     protected $useDefaultDbCommandOptions = true;
     protected $useLocalDbRootUserCommandOptions = true;
     
@@ -67,13 +66,12 @@ class AbstractDatabaseCommand extends AbstractCommand
                 '/^.*$/'
             );
         }
-        
     }
     
     
     /**
      * Runs a mysql command via command line
-     * 
+     *
      * @param string $host
      * @param string $userName
      * @param string $password
@@ -88,8 +86,7 @@ class AbstractDatabaseCommand extends AbstractCommand
             $password,
             $databaseName = null,
             $command
-        )
-    {
+        ) {
         
         // Auto-prepend 'mysql' command, if given command starts out with quotes
         if (substr($command, 0, 1) === '"') {
@@ -138,7 +135,7 @@ class AbstractDatabaseCommand extends AbstractCommand
             $commandParts[1]
         );
         $connectionProcess = new Process($commandLine);
-        $connectionProcess->run();        
+        $connectionProcess->run();
         
         return $connectionProcess;
     }
@@ -146,7 +143,7 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     /**
      * Dumps DB to a local file and returns path.
-     * 
+     *
      * @param string $host
      * @param string $userName
      * @param string $password
@@ -159,9 +156,8 @@ class AbstractDatabaseCommand extends AbstractCommand
             $userName,
             $password,
             $databaseName
-        )
-    {
-        $dumpPath = 
+        ) {
+        $dumpPath =
             $this->fileSystem->getUserHome()
             . DIRECTORY_SEPARATOR
             . 'dumps';
@@ -188,7 +184,7 @@ class AbstractDatabaseCommand extends AbstractCommand
         
         if ($process->getExitCode() !== 0) {
             throw new \Exception($process->getErrorOutput(), 1502037510);
-        } elseif( (@filesize($dumpAbsPath) === 0) ) {
+        } elseif ((@filesize($dumpAbsPath) === 0)) {
             throw new \Exception('The dump file is empty. Something went wrong.', 1502037652);
         }
         
@@ -199,7 +195,7 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     /**
      * Checks, whether a specific local database exists
-     * 
+     *
      * @param string $databaseName
      * @throws Exception
      * @return boolean
@@ -234,8 +230,8 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     /**
      * Creates local database
-     * 
-     * 
+     *
+     *
      * @param string $dbName
      * @param string $userName
      * @param boolean $setLocalPasswordOnSuccess If true, the 'localPassword'
@@ -265,7 +261,7 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     /**
      * Creates a local database user and grants access to a specific database
-     * 
+     *
      * @param string $userName
      * @param string $databaseName
      * @return string
@@ -300,7 +296,6 @@ class AbstractDatabaseCommand extends AbstractCommand
         // password, if those options exist in the current call.
         if ($this->inputInterface->hasOption('localDatabaseName')
                 && $this->inputInterface->hasOption('localUserName')) {
-            
             if ($this->inputInterface->getOption('localDatabaseName') === $databaseName) {
                 $this->inputInterface->setOption('localUserName', $userName);
                 $this->io->text(sprintf('Using "%s" as new user for the rest of the request.', $userName));
@@ -337,13 +332,13 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     /**
      * Will create both a local database and a corresponding user
-     * 
+     *
      * @param string $dbName
      * @param string $userName
      * @return mixed New password, if new user has been created, true otherwise
      */
     protected function createLocalDatabaseAndUser($dbName, $userName)
-    {   
+    {
         $dbExists = $this->localDatabaseExists($dbName);
         if (!$dbExists) {
             $this->createLocalDatabase($dbName);
@@ -361,7 +356,7 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     /**
      * Checks, whether a specific local database exists
-     * 
+     *
      * @param string $dbUserName
      * @throws Exception
      * @return boolean
@@ -403,7 +398,7 @@ class AbstractDatabaseCommand extends AbstractCommand
     
     /**
      * Imports a .sql file into a local database
-     * 
+     *
      * @param string $dumpFilePath Path to the dump file
      * @throws Exception
      * @return boolean
@@ -438,5 +433,4 @@ class AbstractDatabaseCommand extends AbstractCommand
         $this->io->processingEnd('done.');
         return true;
     }
-    
 }

@@ -8,7 +8,6 @@ use GlowPointZero\LocalDevTools\Command\AbstractCommand;
 
 class LinkCommand extends AbstractCommand
 {
-    
     const COMMAND_NAME = 'link';
     const COMMAND_DESCRIPTION = 'Create a symlink quickly from your custom defined set';
     
@@ -94,6 +93,5 @@ class LinkCommand extends AbstractCommand
         }
         
         $this->io->newLine();
-        
     }
 }

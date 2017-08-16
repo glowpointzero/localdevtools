@@ -9,15 +9,15 @@ class LocalConfiguration
     /**
      * @var Filesystem
      */
-    var $fileSystem;
+    protected $fileSystem;
     
     
     const CONFIGURATION_DIRECTORY = '.localdevtools'; // ... under user home
     const CONFIGURATION_FILE_NAME = 'config';
     const DEFAULT_TEMPLATE_ROOT_PATH = 'Templates';
     
-    var $isLoaded = false;
-    var $configuration = [
+    protected $isLoaded = false;
+    protected $configuration = [
         'hostConfigurationFilesRootPath' => '',
         'hostConfigurationTemplatesRootPath' => '',
         'projectsRootPath' => '',
@@ -42,18 +42,17 @@ class LocalConfiguration
      */
     public function __construct(Filesystem $fileSystem)
     {
-        
         $this->fileSystem = $fileSystem;
-        $this->configuration['hostConfigurationTemplatesRootPath'] = 
-            LOCAL_DEV_TOOLS_ROOT 
-            . DIRECTORY_SEPARATOR 
+        $this->configuration['hostConfigurationTemplatesRootPath'] =
+            LOCAL_DEV_TOOLS_ROOT
+            . DIRECTORY_SEPARATOR
             . self::DEFAULT_TEMPLATE_ROOT_PATH;
     }
     
     
     /**
      * Sets an individual configuration parameter
-     * 
+     *
      * @param string $parameter
      * @param mixed $value
      * @throws \Exception
@@ -75,7 +74,7 @@ class LocalConfiguration
     
     /**
      * Gets an individual configuration parameter
-     * 
+     *
      * @param type $parameter
      * @return type
      * @throws \Exception
@@ -101,7 +100,7 @@ class LocalConfiguration
     
     /**
      * Gets all configuration parameters and their values
-     * 
+     *
      * @return array
      */
     public function getAll()
@@ -115,7 +114,7 @@ class LocalConfiguration
     
     /**
      * Gets the absolute path to the configuration file
-     * 
+     *
      * @return string
      */
     public function getConfigurationFilePathAbs()
@@ -127,7 +126,7 @@ class LocalConfiguration
     
     /**
      * Loads local dev tools configuration.
-     * 
+     *
      * @throws \Exception
      */
     public function load()
@@ -142,15 +141,14 @@ class LocalConfiguration
             );
         }
         
-        if ( ($configuration = file_get_contents($this->getConfigurationFilePathAbs())) ) {
+        if (($configuration = file_get_contents($this->getConfigurationFilePathAbs()))) {
             $jsonConfiguration = json_decode($configuration, true);
             
-            foreach($this->configuration as $configKey => $configValue) {
+            foreach ($this->configuration as $configKey => $configValue) {
                 if (isset($jsonConfiguration[$configKey])) {
                     $this->configuration[$configKey] = $jsonConfiguration[$configKey];
                 }
             }
-            
         } else {
             throw new \Exception(
                 sprintf(

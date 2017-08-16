@@ -18,15 +18,14 @@ use GlowPointZero\LocalDevTools\Command\Server\RestartCommand;
  */
 class CreateCommand extends AbstractCommand
 {
-    
     const COMMAND_NAME = 'project:create';
     const COMMAND_DESCRIPTION = 'Sets up a new project on your local machine.';
     
     const GIT_REPOSITORY_CLONE_TARGETS = ['Project files root directory', 'Document root'];
-    const COMPOSER_ACTIONS_AFTER_GIT_CLONE = ['none', 'install', 'update'];  
+    const COMPOSER_ACTIONS_AFTER_GIT_CLONE = ['none', 'install', 'update'];
     const LOGS_DIRECTORY = 'logs';
     
-    var $additionalVhostPlaceholders = [
+    protected $additionalVhostPlaceholders = [
         'documentRoot' => 'REPLACEMENT NOT SET!',
         'logsDirectory' => 'REPLACEMENT NOT SET!',
     ];
@@ -107,7 +106,6 @@ class CreateCommand extends AbstractCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-                
         $this->io->section('File system');
         $this->createDirectories();
 
@@ -153,7 +151,7 @@ class CreateCommand extends AbstractCommand
         } catch (\Exception $exception) {
             $this->io->error($exception->getMessage());
             $this->letUserDecideOnContinuing();
-        }       
+        }
         
         // Project files subdirectory (containing code most likely to be
         // versioned, excluding logs, etc.)
@@ -219,22 +217,22 @@ class CreateCommand extends AbstractCommand
     
     protected function getProjectFilesRootDirectory()
     {
-        return $this->getProjectRootDirectory() 
-            . DIRECTORY_SEPARATOR 
+        return $this->getProjectRootDirectory()
+            . DIRECTORY_SEPARATOR
             . $this->inputInterface->getOption('projectFilesRootDirectoryName');
     }
     
     protected function getDocumentRootDirectory()
     {
-        return $this->getProjectFilesRootDirectory() 
-            . DIRECTORY_SEPARATOR 
+        return $this->getProjectFilesRootDirectory()
+            . DIRECTORY_SEPARATOR
             . $this->inputInterface->getOption('documentRootDirectoryName');
     }
     
     
     /**
      * Lets user create/save a vhost configuration file off a template
-     * 
+     *
      * @throws Exception
      * @return void
      */
@@ -271,7 +269,7 @@ class CreateCommand extends AbstractCommand
             );
         }
 
-        $vhostConfigurationPath = 
+        $vhostConfigurationPath =
             $this->localConfiguration->get('hostConfigurationFilesRootPath')
             . DIRECTORY_SEPARATOR
             . $this->inputInterface->getOption('projectKey') . '.conf';
@@ -288,7 +286,7 @@ class CreateCommand extends AbstractCommand
     
     
     /**
-     * Extends 
+     * Extends
      * @throws \Exception
      */
     protected function extendHostsFile()
@@ -320,13 +318,12 @@ class CreateCommand extends AbstractCommand
     
     /**
      * Lets user choose a specific template file
-     * 
+     *
      * @param type $templatesRootPath
      * @return boolean
      */
     protected function chooseAndLoadTemplate($templatesRootPath)
     {
-        
         $templateName = '';
         
         while (empty($templateName)) {
@@ -350,10 +347,9 @@ class CreateCommand extends AbstractCommand
                 if ($continuationChoiceResult === 1) {
                     return false;
                 }
-                
             } else {
                 $templateName = $this->io->choice(sprintf('Choose a file from %s', $templatesRootPath), $files);
-            }            
+            }
         }
         
         $templateContents = file_get_contents($templatesRootPath . DIRECTORY_SEPARATOR . $templateName);
@@ -365,7 +361,7 @@ class CreateCommand extends AbstractCommand
     /**
      * Handles all the creating / copying of databases during
      * the 'execute()' process
-     * 
+     *
      * @param OutputInterface $output
      */
     protected function handleLocalDatabaseCreationAndImport($output)
@@ -374,7 +370,6 @@ class CreateCommand extends AbstractCommand
         $localDatabaseCreated = false;
         $createALocalDatabase = $this->io->confirm('Create a local database?');
         while (!$doneCreatingLocalDatabase && $createALocalDatabase) {
-            
             $createLocalCommand = $this->getApplication()->find(
                     \GlowPointZero\LocalDevTools\Command\Database\CreateCommand::COMMAND_NAME
             );
@@ -391,12 +386,10 @@ class CreateCommand extends AbstractCommand
                 $createLocalCommand->run(new ArrayInput([]), $output);
                 $doneCreatingLocalDatabase = true;
                 $localDatabaseCreated = true;
-                
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $doneCreatingLocalDatabase = !$this->io->confirm('It seems like this didn\'t go as planned. Try again?');
             }
-            
         }
         
         $localDatabaseOptions = [];
@@ -417,7 +410,6 @@ class CreateCommand extends AbstractCommand
                 $copyFromRemoteCommand->run(new ArrayInput($localDatabaseOptions), $output);
                 
                 $doneImportingRemoteDatabase = true;
-                
             } catch (\Exception $exception) {
                 $this->io->error($exception->getMessage());
                 $doneImportingRemoteDatabase = !$this->io->confirm('It seems like this didn\'t go as planned. Try again?');
@@ -449,9 +441,8 @@ class CreateCommand extends AbstractCommand
             $firstFilePath = $targetDirectoryPath . DIRECTORY_SEPARATOR . $filesInDestination[0];
 
             if (
-                $firstFilePath === $this->getDocumentRootDirectory() 
+                $firstFilePath === $this->getDocumentRootDirectory()
                 && count($this->fileSystem->getFilesInDirectory($firstFilePath)) === 0) {
-
                 $this->fileSystem->remove($firstFilePath);
             }
         }
@@ -479,7 +470,7 @@ class CreateCommand extends AbstractCommand
     
     /**
      * Runs composer action according to option 'composerAction'
-     * 
+     *
      * @return void
      */
     protected function runComposerActions()
@@ -491,7 +482,7 @@ class CreateCommand extends AbstractCommand
         
         if ($composerAction === 0) {
             return true;
-        }     
+        }
         $composerCommand = sprintf(
             'composer %s',
             $composerAction > 1 ? 'update' : 'install'

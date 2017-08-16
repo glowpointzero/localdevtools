@@ -5,10 +5,10 @@ class Filesystem extends \Symfony\Component\Filesystem\Filesystem
 {
     /**
      * Holds paths to all temporary files created at runtime
-     * 
+     *
      * @var array
      */
-    var $temporaryFiles = [];
+    protected $temporaryFiles = [];
     
     public function __destruct()
     {
@@ -17,7 +17,7 @@ class Filesystem extends \Symfony\Component\Filesystem\Filesystem
     
     /**
      * Gets the file (list) out of any given directory.
-     * 
+     *
      * @param string $directory The starting directory
      * @param string $filterPattern A regex filter pattern
      * @param array $typesFilter 'files', 'directories', or both (default)
@@ -48,16 +48,16 @@ class Filesystem extends \Symfony\Component\Filesystem\Filesystem
                 }
             }
             if (
-                !in_array('files', $typesFilter) 
+                !in_array('files', $typesFilter)
                 && is_file($directory . DIRECTORY_SEPARATOR . $fileName)) {
-                    unset($files[$fileNumber]);
-                    continue;
-                }
+                unset($files[$fileNumber]);
+                continue;
+            }
             if (
-                !in_array('directories', $typesFilter) 
+                !in_array('directories', $typesFilter)
                 && is_dir($directory . DIRECTORY_SEPARATOR . $fileName)) {
-                    unset($files[$fileNumber]);
-                    continue;
+                unset($files[$fileNumber]);
+                continue;
             }
         }
         
@@ -78,7 +78,7 @@ class Filesystem extends \Symfony\Component\Filesystem\Filesystem
     
     /**
      * Creates a new, temporary file
-     * 
+     *
      * @return type
      */
     public function createTemporaryFile()

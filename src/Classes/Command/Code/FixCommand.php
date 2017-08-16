@@ -5,10 +5,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use GlowPointZero\LocalDevTools\Command\AbstractCommand;
 
-
 class FixCommand extends AbstractCommand
 {
-    
     const COMMAND_NAME = 'code:fix';
     const COMMAND_DESCRIPTION = 'Runs php-cs-fixer over the files you specify';
     
@@ -17,10 +15,14 @@ class FixCommand extends AbstractCommand
      * {@inheritdoc}
      */
     protected function execute(InputInterface $input, OutputInterface $output)
-    {        
-        $configFile = $this->io->ask('php-cs-fixer configuration file (optional)?', '', function($value){ return $value; });
+    {
+        $configFile = $this->io->ask('php-cs-fixer configuration file (optional)?', '', function ($value) {
+            return $value;
+        });
         if (empty($configFile)) {
-            $rules = $this->io->ask('Rules', '@PSR1,@PSR2', function($value){ return $value; });
+            $rules = $this->io->ask('Rules', '@PSR1,@PSR2', function ($value) {
+                return $value;
+            });
         } else {
             $rules = false;
         }

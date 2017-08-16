@@ -8,11 +8,10 @@ use GlowPointZero\LocalDevTools\Command\SetupCommandInterface;
 
 class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
 {
-    
     const COMMAND_NAME = 'link:setup';
     const COMMAND_DESCRIPTION = 'Sets up your local symlink shortcuts.';
     
-    var $symlinkShortcuts = [];
+    protected $symlinkShortcuts = [];
     
     
     public function getConfiguredValues()
@@ -35,13 +34,13 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
      * {@inheritdoc}
      */
     public function execute(InputInterface $input, OutputInterface $output)
-    {        
+    {
         $this->io->say('Let\'s set up your symlink shortcuts!');
         
         $choices = ['list all', 'add', 'remove', 'done!'];
         $nextStep = array_search($this->io->choice(' What do you want to do? ', $choices), $choices);
         
-        while($nextStep !== 3) {
+        while ($nextStep !== 3) {
             if ($nextStep === 0) {
                 $this->io->section('Current symlink shortcuts');
                 $this->listCurrentSymlinkShortcuts();
@@ -56,7 +55,7 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
             $this->localConfiguration->save();
             $nextStep = array_search($this->io->choice(' What to do next', $choices), $choices);
         }
-        uasort($this->symlinkShortcuts, function($firstValue, $secondValue){
+        uasort($this->symlinkShortcuts, function ($firstValue, $secondValue) {
             $comparingArray = [$firstValue['identifier'], $secondValue['identifier']];
             asort($comparingArray);
             if ($comparingArray[0] === $firstValue['identifier']) {
@@ -70,7 +69,7 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
     
     /**
      * Lists all currently registered symlink shortcuts
-     * 
+     *
      * @param boolean $directOutput Output content directly (return alternatively)
      * @return string|void
      */
@@ -87,7 +86,6 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
                     $symlink['source'],
                     $symlink['target']
                 ) . PHP_EOL . PHP_EOL;
-                
             }
         }
         
@@ -101,7 +99,7 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
     
     /**
      * Lets the user set up a new symlink shortcut
-     * 
+     *
      * @return void
      */
     protected function addSymlinkShortcut()
@@ -131,13 +129,13 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
     
     /**
      * Lets the user remove a specific symlink shortcut
-     * 
+     *
      * @return void
      */
     protected function removeSymlinkShortcut()
     {
         $options = [];
-        foreach($this->symlinkShortcuts as $entry) {
+        foreach ($this->symlinkShortcuts as $entry) {
             $options[] = $entry['identifier'];
         }
         $options[] = 'abort!';

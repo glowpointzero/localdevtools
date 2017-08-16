@@ -19,19 +19,19 @@ abstract class AbstractCommand extends Command
     /**
      * @var DevToolsStyle
      */
-    var $io;
+    protected $io;
     
     
-    /** 
-     * @var InputInterface 
+    /**
+     * @var InputInterface
      */
-    var $inputInterface;
+    protected $inputInterface;
     
     
     /**
      * @var Filesystem
      */
-    var $fileSystem;
+    protected $fileSystem;
     
     
     /**
@@ -41,7 +41,7 @@ abstract class AbstractCommand extends Command
         
     /**
      * A collection of options to revalidate
-     * 
+     *
      * @var array
      */
     protected $options = [];
@@ -50,8 +50,8 @@ abstract class AbstractCommand extends Command
     /**
      * May contain result values that need to be accessed
      * from outside of the command after it has been run.
-     * 
-     * @var array 
+     *
+     * @var array
      */
     protected $resultValues = [];
     
@@ -98,7 +98,7 @@ abstract class AbstractCommand extends Command
     
     /**
      * Adds a controller option that may later be validated and ask the user correction for
-     * 
+     *
      * @param string $name                    Option identifier
      * @param string $description             Option description
      * @param string $default                 Default value (optional)
@@ -140,35 +140,32 @@ abstract class AbstractCommand extends Command
             $description,
             $default
         );
-        
-        
     }
     
     /**
      * Goes through all options and validates each
      */
     protected function validateAllOptions()
-    {       
-       /** @var InputOption $option */
-       foreach($this->options as $optionName => $optionDefinition) {
-           $optionNeedsValidation = $this->optionNeedsValidation($optionName);
+    {
+        /** @var InputOption $option */
+        foreach ($this->options as $optionName => $optionDefinition) {
+            $optionNeedsValidation = $this->optionNeedsValidation($optionName);
            
-           if ($this->optionIsValid($optionName)
+            if ($this->optionIsValid($optionName)
                 && $this->inputInterface->hasParameterOption('--'. $optionName)) {
-               
                 $optionNeedsValidation = false;
-           }
+            }
            
-           while ($optionNeedsValidation) {
-               if ($this->options[$optionName]['validationRound'] > 1) {
-                   $this->outputErrorForOption($optionName);
-               }
+            while ($optionNeedsValidation) {
+                if ($this->options[$optionName]['validationRound'] > 1) {
+                    $this->outputErrorForOption($optionName);
+                }
                
-               $this->letUserSetOption($optionName);
+                $this->letUserSetOption($optionName);
 
-               $optionDefinition['validationRound']++;
-               $this->options[$optionName]['validationRound']++;
-               $optionNeedsValidation = !$this->optionIsValid($optionName);
+                $optionDefinition['validationRound']++;
+                $this->options[$optionName]['validationRound']++;
+                $optionNeedsValidation = !$this->optionIsValid($optionName);
             }
         }
         
@@ -181,7 +178,7 @@ abstract class AbstractCommand extends Command
     
     /**
      * Checks whether an option needs validation
-     * 
+     *
      * @param string $optionName
      * @return boolean
      */
@@ -208,7 +205,6 @@ abstract class AbstractCommand extends Command
         
         $isAtLeastSecondValidationRound = ($optionDefinition['validationRound'] > 1);
         if (($isEmpty || $isDefaultValue) && $isAtLeastSecondValidationRound) {
-            
             $needsValidation = false;
         }
         
@@ -218,7 +214,7 @@ abstract class AbstractCommand extends Command
     
     /**
      * Validates one single option value
-     * 
+     *
      * @param string $optionName
      * @return boolean
      */
@@ -251,7 +247,7 @@ abstract class AbstractCommand extends Command
     
     /**
      * Outputs an error for a specific option.
-     * 
+     *
      * @param type $optionName
      */
     protected function outputErrorForOption($optionName)
@@ -274,7 +270,7 @@ abstract class AbstractCommand extends Command
     /**
      * Lets the user (re-)set a specific option as defined by
      * 'addValidatableOption'
-     * 
+     *
      * @param string $optionName
      */
     protected function letUserSetOption($optionName)
@@ -290,15 +286,19 @@ abstract class AbstractCommand extends Command
             if (preg_match('/passw/i', $optionName)) {
                 $newValue = $this->io->askHidden(
                     $optionDefinition['description'],
-                    function($inputValue) { return trim($inputValue); }
+                    function ($inputValue) {
+                        return trim($inputValue);
+                    }
                 );
             } else {
                 $newValue = $this->io->ask(
                     $optionDefinition['description'],
                     $optionDefinition['default'],
-                    function($inputValue) { return trim($inputValue); }
+                    function ($inputValue) {
+                        return trim($inputValue);
+                    }
                 );
-             }
+            }
         }
         if ($newValue === null) {
             $newValue = '';
@@ -312,7 +312,7 @@ abstract class AbstractCommand extends Command
     /**
      * Sets a new default option value for an option that has already
      * been initialized.
-     * 
+     *
      * @param string $optionName
      * @param mixed $newDefaultValue
      */
@@ -325,7 +325,7 @@ abstract class AbstractCommand extends Command
     /**
      * Asks the user, whether he/she likes to continue in the
      * process and auto-quits if chosen 'no' (overrideable).
-     * 
+     *
      * @param string $reasonWhyProcessStopped
      * @param bool $abortIfUserDecidesToQuit
      * @return bool
@@ -347,16 +347,15 @@ abstract class AbstractCommand extends Command
         }
         
         return $continue;
-        
     }
     
     /**
      * Gets a specific result/return value of this command
-     * 
+     *
      * @return mixed
      */
     public function getResultValue($key)
-    {        
+    {
         if (!isset($this->resultValues[$key])) {
             return null;
         } else {
@@ -368,5 +367,4 @@ abstract class AbstractCommand extends Command
     {
         $this->resultValues[$key] = $value;
     }
-    
 }

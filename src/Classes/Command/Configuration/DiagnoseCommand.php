@@ -8,7 +8,6 @@ use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
 
 class DiagnoseCommand extends AbstractCommand
 {
-    
     const COMMAND_NAME = 'configuration:diagnose';
     const COMMAND_DESCRIPTION = 'Diagnoses your local \'Local Dev Tools\' setup.';
     
@@ -20,7 +19,7 @@ class DiagnoseCommand extends AbstractCommand
     {
         $localConfiguration = $this->localConfiguration->getAll();
         $localConfigurationTableValues = [];
-        foreach($localConfiguration as $configurationKey => $configurationValue) {
+        foreach ($localConfiguration as $configurationKey => $configurationValue) {
             $description = \GlowPointZero\LocalDevTools\LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS[$configurationKey];
             $this->io->section($configurationKey . PHP_EOL . '(' . $description . ')');
             if (is_string($configurationValue)) {
@@ -31,7 +30,8 @@ class DiagnoseCommand extends AbstractCommand
         }
         
         $this->io->caution(
-            sprintf('Make sure you wildcard your vhosts directory! '. PHP_EOL
+            sprintf(
+                'Make sure you wildcard your vhosts directory! '. PHP_EOL
                     . 'You\'ll need to include your configured directory'
                     . ' "%s" in your vhosts config.'. PHP_EOL
                     . ' On apache you might want to add'. PHP_EOL . PHP_EOL
@@ -40,22 +40,23 @@ class DiagnoseCommand extends AbstractCommand
                 $this->localConfiguration->get('hostConfigurationFilesRootPath'),
                 'Include "'. $this->localConfiguration->get('hostConfigurationFilesRootPath') . DIRECTORY_SEPARATOR . '*.conf"'
             )
-        );     
+        );
     }
     
     
     /**
      * Tests given configuration value
-     * 
+     *
      * Tests given value for empty value and - if based on the
      * configuration key, it seems like it is a path, checks
      * the file path.
-     * 
+     *
      * @param string $configurationKey
      * @param string $configurationValue
      * @return void
      */
-    protected function testConfigurationValue($configurationKey, $configurationValue) {
+    protected function testConfigurationValue($configurationKey, $configurationValue)
+    {
         if ($configurationKey === 'identifier') {
             $this->io->say(sprintf('"%s":', $configurationValue), null, false, false);
         }

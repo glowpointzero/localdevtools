@@ -9,9 +9,8 @@ use GlowPointZero\LocalDevTools\Console\Style\DevToolsStyle;
 
 class SetupCommand extends AbstractCommand
 {
-    
     const COMMAND_NAME = 'setup';
-    const COMMAND_DESCRIPTION = 'Sets up your local dev environment tools.';    
+    const COMMAND_DESCRIPTION = 'Sets up your local dev environment tools.';
     
     public function configure()
     {
@@ -28,7 +27,6 @@ class SetupCommand extends AbstractCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        
         $this->io->processingStart('Loading local configuration');
         // Load current configuration
         try {
@@ -41,7 +39,6 @@ class SetupCommand extends AbstractCommand
         
         // Iterate through settings and ask to set each one
         foreach (LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS as $configurationKey => $configurationDescription) {
-
             $configurationValue = $this->localConfiguration->get($configurationKey);
             
             if (class_exists($configurationDescription)) {
@@ -75,7 +72,9 @@ class SetupCommand extends AbstractCommand
                     $this->localConfiguration->get('projectsRootPath')
                 ),
                 null,
-                function($userInput) { return $userInput; }
+                function ($userInput) {
+                    return $userInput;
+                }
             );
             if (trim($symlinkPath)) {
                 $this->fileSystem->symlink($this->localConfiguration->get('projectsRootPath'), $symlinkPath);

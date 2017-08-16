@@ -13,7 +13,6 @@ use GlowPointZero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
  */
 class CreateCommand extends AbstractDatabaseCommand
 {
-    
     const COMMAND_NAME = 'db:create';
     const COMMAND_DESCRIPTION = 'Creates a new DB and a corresponding user';
     
@@ -23,7 +22,7 @@ class CreateCommand extends AbstractDatabaseCommand
     /**
      * @var string
      */
-    var $newPassword = null;
+    protected $newPassword = null;
     
     
     /**
@@ -46,8 +45,7 @@ class CreateCommand extends AbstractDatabaseCommand
             null,
             null,
             '/^[0-9a-z\-\._]*$/i'
-        );   
-        
+        );
     }
     
     
@@ -67,6 +65,4 @@ class CreateCommand extends AbstractDatabaseCommand
             $this->setResultValue('password', $newPassword);
         }
     }
-    
-    
 }

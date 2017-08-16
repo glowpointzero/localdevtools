@@ -8,7 +8,6 @@ use GlowPointZero\LocalDevTools\Command\AbstractCommand;
 
 class RestartCommand extends AbstractCommand
 {
-    
     const COMMAND_NAME = 'server:restart';
     const COMMAND_DESCRIPTION = 'Restarts your local server.';
     

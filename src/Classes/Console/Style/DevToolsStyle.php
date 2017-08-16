@@ -3,9 +3,8 @@ namespace GlowPointZero\LocalDevTools\Console\Style;
 
 class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
 {
- 
-    var $lineWidth = 80;
-    var $linePadding = '    ';
+    protected $lineWidth = 80;
+    protected $linePadding = '    ';
     
     const SAY_STYLE_DEFAULT = 'fg=white;bg=black';
     const SAY_STYLE_TITLE = 'fg=black;bg=cyan';
@@ -43,13 +42,13 @@ class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
     
     /**
      * Tell the user a process has started.
-     * 
+     *
      * @param string $message
      */
     public function processingStart($message)
     {
         $lastCharacter = substr($message, -1);
-        if ( (!in_array($lastCharacter, ['.', '!', ' ', '?'])) ) {
+        if ((!in_array($lastCharacter, ['.', '!', ' ', '?']))) {
             $message .= '... ';
         }
         $this->say($this->linePadding . $message, self::SAY_STYLE_DEFAULT, true, false);
@@ -57,7 +56,7 @@ class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
     
     /**
      * Tell the user a previously started process has ended successfully.
-     * 
+     *
      * @param string $message
      */
     public function processingEnd($message)
@@ -69,7 +68,7 @@ class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
      * Say something to the user in different alert levels (styles),
      * inline or 'en bloc'. This is the raw(er) command for
      * warning() error(), etc.
-     * 
+     *
      * @param type $message
      * @param type $style
      * @param type $inline

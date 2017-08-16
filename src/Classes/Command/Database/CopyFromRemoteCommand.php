@@ -11,7 +11,6 @@ use GlowPointZero\LocalDevTools\Command\Database\AbstractDatabaseCommand;
  */
 class CopyFromRemoteCommand extends AbstractDatabaseCommand
 {
-    
     const COMMAND_NAME = 'db:copyfromremote';
     const COMMAND_DESCRIPTION = 'Copies a database from a remote server your local machine.';
     
@@ -51,7 +50,6 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
             null,
             '/^.*$/'
         );
-        
     }
     
     
@@ -87,14 +85,13 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
         }
         
         $this->importDumpToLocalDb($remoteDbDumpPath);
-
     }
     
     
     
     /**
      * Checks whether the remote database is accessible
-     * 
+     *
      * @var reference $errors
      * @throws Exception
      * @return boolean
@@ -125,5 +122,4 @@ class CopyFromRemoteCommand extends AbstractDatabaseCommand
         $this->io->processingEnd('ok');
         return true;
     }
-    
 }

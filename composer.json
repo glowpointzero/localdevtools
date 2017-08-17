@@ -8,6 +8,7 @@
             "email": "mail@manuelglauser.ch"
         }
     ],
+    "bin": ["bin/dev"],
     "require": {
         "symfony/console": "*",
         "symfony/filesystem": "^3.3",

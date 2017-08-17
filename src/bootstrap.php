@@ -1,13 +1,13 @@
 <?php
-// Inlude autoload, if installed via composer
-$autoloaderViaComposer = __DIR__ . '/../../../autoload.php';
+// Find autoload.php and derive vendor directory from it
+$autoloaderViaComposer = realpath(__DIR__ . '/../../../autoload.php');
 if (file_exists($autoloaderViaComposer)) {
-    require_once $autoloaderViaComposer;
-// ... or if just cloned as a package
+    $vendorRootPath = realpath(__DIR__ . '/../../..');
 } else {
-    require_once __DIR__.'/../vendor/autoload.php';
+    $vendorRootPath = realpath(__DIR__ . '/../vendor');
 }
-
+require_once $vendorRootPath . '/autoload.php';
+define('VENDOR_ROOT', $vendorRootPath);
 define('LOCAL_DEV_TOOLS_ROOT', __DIR__);
 
 use Symfony\Component\Console\Application;

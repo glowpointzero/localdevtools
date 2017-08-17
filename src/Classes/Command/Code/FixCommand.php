@@ -30,7 +30,7 @@ class FixCommand extends AbstractCommand
         $dryRun = $this->io->confirm('Dry run?');
         $showDiff = $this->io->confirm('Show diff?');
         
-        $phpFixerPath = realpath($GLOBALS['LOCAL_DEV_TOOLS_EXEC_PATH'] . '/../vendor/bin/php-cs-fixer');
+        $phpFixerPath = realpath(VENDOR_ROOT . '/bin/php-cs-fixer');
         $commandLine = '"' . $phpFixerPath . '" fix';
         
         if ($fileOrDirectory) {

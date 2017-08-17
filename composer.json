@@ -1,4 +1,13 @@
 {
+    "name": "glowpointzero/localdevtools",
+    "description": "A small tool box for local website development",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Manuel Glauser",
+            "email": "mail@manuelglauser.ch"
+        }
+    ],
     "require": {
         "symfony/console": "*",
         "symfony/filesystem": "^3.3",

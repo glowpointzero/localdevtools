@@ -28,7 +28,7 @@ class LocalConfiguration
     ];
     const CONFIGURATION_PARAMETERS_DESCRIPTIONS = [
         'hostConfigurationFilesRootPath' => 'Directory path of your virtual host *.conf files.',
-        'hostConfigurationTemplatesRootPath' => 'Directory path of your template files.',
+        'hostConfigurationTemplatesRootPath' => 'Directory path of your virtual host template files.',
         'projectsRootPath' => 'Directory, where all your webprojects will be created.',
         'hostsFilePath' => 'Path to your hosts file.',
         'hostsFileDomainPattern' => 'Pattern used to extend your hosts file when creating new projects. Individual domains may be added during project setup.',

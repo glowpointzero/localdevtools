@@ -66,22 +66,35 @@ abstract class AbstractCommand extends Command
             ->setName($this::COMMAND_NAME)
             ->setDescription($this::COMMAND_DESCRIPTION)
         ;
-        
-        // @todo
-        $this->addOption(
-            'alwaysUseDefaults',
-            '',
-            \Symfony\Component\Console\Input\InputOption::VALUE_NONE,
-            'If set, will skip asking for options that have a valid default value'
-        );
     }
     
     
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
+        // Catch '--no-interaction' calls and reset
+        if (!$input->isInteractive()) {
+            $issueNonInteractiveWarning = true;
+            $input->setInteractive(true);
+        } else {
+            $issueNonInteractiveWarning = false;
+        }
+        
+        // Assign input / output interfaces
         $this->inputInterface = $input;
         $this->io = new DevToolsStyle($input, $output);
         
+        // Issue warning, if '--no-interaction' has been called
+        if ($issueNonInteractiveWarning) {
+            $this->io->warning(
+                'The non-interactive version isn\'t quite there yet.'
+                .' But rest assured, that none the commands will require'
+                . ' huge amounts of typing. After all, that\'s one of the'
+                . ' big reason this tool box exists, eh.'
+            );
+            sleep(3);
+        }
+        
+        // Output title of the current command
         $this->io->title('Running ' . $this->getName() . ' ...');
     }
     

@@ -17,26 +17,11 @@ class SetupCommand extends AbstractCommand
         parent::configure();
     }
     
-    public function interact(InputInterface $input, OutputInterface $output)
-    {
-        // Prevent loadig and validating local configuration
-    }
-    
     /**
      * {@inheritdoc}
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->io->processingStart('Loading local configuration');
-        // Load current configuration
-        try {
-            $localConfiguration = $this->localConfiguration->getAll();
-            $this->io->processingEnd('ok');
-        } catch (\Exception $exception) {
-            $localConfiguration = [];
-            $this->io->say('Doesn\'t exist yet!', DevToolsStyle::SAY_STYLE_WARNING, true, false);
-        }
-        
         // Iterate through settings and ask to set each one
         foreach (LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS as $configurationKey => $configurationDescription) {
             $configurationValue = $this->localConfiguration->get($configurationKey);

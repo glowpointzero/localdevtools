@@ -11,15 +11,16 @@ just run the commands without setting any options at all and you will be prompte
 for any missing option.
 
 ## Installation
-You probably want to install this package globally via composer:
-```
-composer global require glowpointzero/localdevtools
-```
-Make sure the global composer 'bin' directory is in your paths and run `dev list`
-to show a description of all available commands. Alternatively (not recommended,
-though), clone the repository to wherever and run `bin/dev list`.
+0. You probably want to install this package globally via composer:
+ `composer global require glowpointzero/localdevtools`. Alternatively
+ (not recommended, though), clone the repository to wherever,
+ and run `composer install`
+0. Make sure the global composer 'bin' directory is in your paths
+0. Run `dev setup` to set some commonly used settings throughout the
+scripts
+0. Run `dev list` to get a description of all available commands.
 
-#### Project structure assumptions
+## Project structure assumptions
 Some commands (such as the 'setup' and the 'project:create' assume that you organize
 your local projects in one single directory containing subdirectories for every
 project:

@@ -105,9 +105,6 @@ class LocalConfiguration
      */
     public function getAll()
     {
-        if (!$this->isLoaded) {
-            $this->load();
-        }
         return $this->configuration;
     }
     
@@ -132,13 +129,20 @@ class LocalConfiguration
     public function load()
     {
         if (!$this->fileSystem->exists($this->getConfigurationFilePathAbs())) {
-            throw new \Exception(
-                sprintf(
-                    'Local Dev Tools configuration file (%s) doesn\'t exist! Run configure command first!',
-                    $this->getConfigurationFilePathAbs()
-                ),
-                1500804159
-            );
+            try {
+                $this->configuration = [];
+                $this->save();
+                
+            } catch (\Exception $exception) {
+                throw new \Exception(
+                    sprintf(
+                        'Attempted to create Local Dev Tools configuration file (%s) which didn\'t exist' . PHP_EOL,
+                        'It couldn\'t be created though. Check your permissions!',
+                        $this->getConfigurationFilePathAbs()
+                    ),
+                    1500804159
+                );
+            }
         }
         
         if (($configuration = file_get_contents($this->getConfigurationFilePathAbs()))) {

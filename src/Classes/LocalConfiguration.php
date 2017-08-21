@@ -75,11 +75,11 @@ class LocalConfiguration
     /**
      * Gets an individual configuration parameter
      *
-     * @param type $parameter
-     * @return type
+     * @param string $parameter
+     * @return mixed
      * @throws \Exception
      */
-    public function get($parameter)
+    public function get($parameter, $default = null)
     {
         if (!$this->isLoaded) {
             $this->load();
@@ -94,7 +94,11 @@ class LocalConfiguration
             );
         }
         
-        return $this->configuration[$parameter];
+        if (!array_key_exists($parameter, $this->configuration)) {
+            return $default;
+        } else {
+            return $this->configuration[$parameter];
+        }
     }
 
     

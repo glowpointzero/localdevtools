@@ -27,7 +27,7 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
     public function __construct($name = null)
     {
         parent::__construct($name);
-        $this->symlinkShortcuts = $this->localConfiguration->get('symlinks');
+        $this->symlinkShortcuts = $this->localConfiguration->get('symlinks', []);
     }
     
     /**

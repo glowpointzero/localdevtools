@@ -1,0 +1,27 @@
+<VirtualHost ((((projectKey)))).local:80>
+    ServerAdmin webmaster@((((projectKey)))).local
+    DocumentRoot "((((documentRoot))))"
+    ServerName ((((projectKey)))).local
+    ServerAlias www.((((projectKey)))).local ((((additionalDomains))))
+    ErrorLog "((((logsDirectory))))/((((projectKey))))-error.log"
+    CustomLog "((((logsDirectory))))/((((projectKey))))-access.log" common
+</VirtualHost>
+
+<VirtualHost ((((projectKey)))).local:443>
+    ServerAdmin webmaster@((((projectKey)))).local
+    DocumentRoot "((((documentRoot))))"
+    ServerName ((((projectKey)))).local
+    ServerAlias www.((((projectKey)))).local ((((additionalDomains))))
+    ErrorLog "((((logsDirectory))))/((((projectKey))))-error.log"
+    CustomLog "((((logsDirectory))))/((((projectKey))))-access.log" common
+    
+    SSLEngine on
+    SSLCertificateFile "conf/ssl.crt/server.crt"
+    SSLCertificateKeyFile "conf/ssl.key/server.key"
+    <FilesMatch "\.(cgi|shtml|phtml|php)$">
+        SSLOptions +StdEnvVars
+    </FilesMatch>
+    <Directory "C:/xampp/apache/cgi-bin">
+        SSLOptions +StdEnvVars
+    </Directory>
+</VirtualHost>

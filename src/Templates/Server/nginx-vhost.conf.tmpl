@@ -1,0 +1,32 @@
+##
+# References:
+# http://wiki.nginx.org/Pitfalls
+# http://wiki.nginx.org/QuickStart
+# http://wiki.nginx.org/Configuration
+# /usr/share/doc/nginx-doc/examples/
+##
+server {
+  # name of the vhost
+  server_name ((((projectKey)))).local www.((((projectKey)))).local ((((additionalDomains))));
+  # accepted port for ipv4 and ipv6
+  listen 80;
+
+  # document root
+  root "((((documentRoot))))";
+
+  index index.php;
+
+  # access and error logging for this vhost by using the logwatch logformat
+  access_log /home/www/log/nginx/((((projectKey))))/access.log logwatch;
+  error_log /home/www/log/nginx/((((projectKey))))/error.log error;
+
+  # pass the PHP scripts to FastCGI server listening on a socket
+  location ~ \.php$ {
+    # listen to socket in /var/run/php5-fpm
+    fastcgi_pass unix:/var/run/www.sock;
+    # include general fastcgi configuration
+    include include.d/fastcgi.conf;
+  }
+
+  include include.d/all_sites.conf;
+}

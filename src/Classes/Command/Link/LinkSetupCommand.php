@@ -51,17 +51,21 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
                 $this->io->section('Remove');
                 $this->removeSymlinkShortcut();
             }
+            
+            uasort($this->symlinkShortcuts, function ($firstValue, $secondValue) {
+                $comparingArray = [$firstValue['identifier'], $secondValue['identifier']];
+                asort($comparingArray);
+                if ($comparingArray[0] === $firstValue['identifier']) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            });
+        
             $this->localConfiguration->set('symlinks', $this->symlinkShortcuts);
             $this->localConfiguration->save();
             $nextStep = array_search($this->io->choice(' What to do next', $choices), $choices);
         }
-        uasort($this->symlinkShortcuts, function ($firstValue, $secondValue) {
-            $comparingArray = [$firstValue['identifier'], $secondValue['identifier']];
-            asort($comparingArray);
-            if ($comparingArray[0] === $firstValue['identifier']) {
-                return -1;
-            }
-        });
         
         $this->setResultValue('resultingConfiguration', $this->symlinkShortcuts);
     }
@@ -141,8 +145,8 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
         $options[] = 'abort!';
         $choiceNumber = array_search($this->io->choice('Which entry do you want to remove?', $options), $options);
         $shortcutHash = array_keys($this->symlinkShortcuts)[$choiceNumber];
-        $removedEntry = $this->symlinkShortcuts[$shortcutHash];
         if ($choiceNumber < count($options)-1) {
+            $removedEntry = $this->symlinkShortcuts[$shortcutHash];
             unset($this->symlinkShortcuts[$shortcutHash]);
             $this->io->success(sprintf('Removed symlink shortcut "%s".', $removedEntry['identifier']));
         } else {

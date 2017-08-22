@@ -80,7 +80,7 @@ class LinkCommand extends AbstractCommand
         // Delete source file
         if (is_dir($linkConfiguration['source'])) {
             rmdir($linkConfiguration['source']);
-        } else {
+        } elseif(is_file($linkConfiguration['source'])) {
             unlink($linkConfiguration['source']);
         }
         

@@ -45,27 +45,7 @@ class SetupCommand extends AbstractCommand
             sprintf('Ok! Saving your settings into %s.', $this->localConfiguration->getConfigurationFilePathAbs())
         );
         $this->localConfiguration->save();
-        
-        // Symlink projects root
-        if ($this->localConfiguration->get('projectsRootPath')) {
-            $symlinkPath = $this->io->ask(
-                sprintf(
-                    'Would you like to create a symlink to your project roots path'
-                        . ' (%s)'
-                        . ' for easier access? If so, provide a path you\'d like to'
-                        . ' access it from.',
-                    $this->localConfiguration->get('projectsRootPath')
-                ),
-                null,
-                function ($userInput) {
-                    return $userInput;
-                }
-            );
-            if (trim($symlinkPath)) {
-                $this->fileSystem->symlink($this->localConfiguration->get('projectsRootPath'), $symlinkPath);
-            }
-        }
-        
+
         $runDiagnose = $this->io->success('We\'re done here. Running diagnose in 3 seconds...');
         sleep(3);
         $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);

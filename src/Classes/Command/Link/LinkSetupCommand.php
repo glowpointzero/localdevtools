@@ -108,6 +108,14 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
      */
     protected function addSymlinkShortcut()
     {
+        $this->io->say(
+            'Notice that for the \'Source path\' as well as for the \'Target path\''
+            . ' you may use placeholders such as ((((my placeholder))))!'
+            . ' When you create the symlink, you\'ll be asked to set a value for the'
+            . ' placeholders you\'ve defined. This lets you use symlinks way more'
+            . ' dynamically. Imagine registering a symlink called "~/currentproject" '
+            . ' with the target set to "/your/way/too/long/path/to/projects/((((Project))))"'
+        );
         $identifier = $this->io->ask('Unique identifier', '');
         $sourcePath = $this->io->ask('Source path', '');
         $targetPath = $this->io->ask('Target path', '');

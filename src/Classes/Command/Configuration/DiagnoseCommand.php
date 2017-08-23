@@ -73,7 +73,11 @@ class DiagnoseCommand extends AbstractCommand
 
         if (empty($configurationValue)) {
             $this->io->say('is empty!', DevToolsStyle::SAY_STYLE_WARNING, false, false);
-        } elseif (preg_match('/(source|target|path)$/i', $configurationKey) && !file_exists($configurationValue)) {
+        } elseif (
+                preg_match('/(source|target|path)$/i', $configurationKey)
+                && !file_exists($configurationValue)
+                && substr_count($configurationValue, '((((') === 0
+            ) {
             $this->io->say(sprintf('file "%s" doesn\'t exist!', $configurationValue), DevToolsStyle::SAY_STYLE_ERROR, false, false);
         } else {
             $this->io->processingEnd('ok');

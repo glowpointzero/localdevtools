@@ -42,6 +42,8 @@ class LinkCommand extends AbstractCommand
         
         // Create symlink
         $linkConfiguration = array_values($symlinks)[$chosenOption];
+        $this->askToReplacePlaceholders($linkConfiguration);
+        
         $this->io->processingStart(
             sprintf(
                 'Linking "%s" to "%s"...',
@@ -93,5 +95,42 @@ class LinkCommand extends AbstractCommand
         }
         
         $this->io->newLine();
+    }
+    
+    
+    /**
+     * Replaces any placeholders using user input at creation time
+     * 
+     * @param type $symlinkConfiguration
+     */
+    protected function askToReplacePlaceholders(&$symlinkConfiguration)
+    {
+        foreach (['source', 'target'] as $configurationKey) {
+            while (strpos($symlinkConfiguration[$configurationKey], '((((') !== false) {
+                
+                $placeholderStart = strpos($symlinkConfiguration[$configurationKey], '((((');
+                $placeholderEnd = strpos($symlinkConfiguration[$configurationKey], '))))', $placeholderStart);
+                // Invalid placeholder nesting, replace start placeholder
+                if ($placeholderEnd === false) {
+                    $symlinkConfiguration[$configurationKey] = 
+                        substr($symlinkConfiguration[$configurationKey], 0, $placeholderStart)
+                        . substr($symlinkConfiguration[$configurationKey], $placeholderStart+4);
+                    continue;
+                }
+                
+                $this->io->say($symlinkConfiguration[$configurationKey]);
+                $this->io->say($placeholderStart . ' - '. $placeholderEnd);
+                $placeholderName = 
+                    substr($symlinkConfiguration[$configurationKey], $placeholderStart+4, $placeholderEnd-$placeholderStart-4);
+
+                $placeholderReplacement = $this->io->ask($placeholderName);
+                $symlinkConfiguration[$configurationKey] = 
+                    str_replace(
+                        '((((' . $placeholderName . '))))',
+                        $placeholderReplacement,
+                        $symlinkConfiguration[$configurationKey]
+                );
+            }
+        }
     }
 }

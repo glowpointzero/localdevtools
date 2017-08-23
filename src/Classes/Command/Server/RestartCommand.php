@@ -17,13 +17,17 @@ class RestartCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->io->processingStart('Restarting server');
-        $restartCommand = $this->localConfiguration->get('serverRestartCommand');
-        $process = new Process($restartCommand);
-        $process->run();
-        if ($process->getExitCode() !== 0) {
-            throw new \Exception($process->getErrorOutput(), 1502040768);
+        $this->io->say('Restarting server...');
+        $commands = explode(';', $restartCommand);
+        foreach ($commands as $command) {
+            $process = new Process(trim($command));
+            $process->run(function ($type, $bufferedOutput) {
+                if (Process::ERR === $type) {
+                   $this->io->say($bufferedOutput, \Glowpointzero\LocalDevTools\Console\Style\DevToolsStyle::SAY_STYLE_ERROR);
+                } else {
+                    $this->io->say($bufferedOutput, \Glowpointzero\LocalDevTools\Console\Style\DevToolsStyle::SAY_STYLE_OK);
+                }
+            });
         }
-        $this->io->processingEnd('ok');
     }
 }

@@ -118,8 +118,6 @@ class LinkCommand extends AbstractCommand
                     continue;
                 }
                 
-                $this->io->say($symlinkConfiguration[$configurationKey]);
-                $this->io->say($placeholderStart . ' - '. $placeholderEnd);
                 $placeholderName = 
                     substr($symlinkConfiguration[$configurationKey], $placeholderStart+4, $placeholderEnd-$placeholderStart-4);
 

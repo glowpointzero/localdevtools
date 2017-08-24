@@ -18,6 +18,7 @@ class RestartCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->io->say('Restarting server...');
+        $restartCommand = $this->localConfiguration->get('serverRestartCommand');
         $commands = explode(';', $restartCommand);
         foreach ($commands as $command) {
             $process = new Process(trim($command));

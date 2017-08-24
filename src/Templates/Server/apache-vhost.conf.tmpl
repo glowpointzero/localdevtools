@@ -1,4 +1,4 @@
-<VirtualHost ((((projectKey)))).local:80>
+<VirtualHost *.local:80>
     ServerAdmin webmaster@((((projectKey)))).local
     DocumentRoot "((((documentRoot))))"
     ServerName ((((projectKey)))).local
@@ -7,7 +7,7 @@
     CustomLog "((((logsDirectory))))/((((projectKey))))-access.log" common
 </VirtualHost>
 
-<VirtualHost ((((projectKey)))).local:443>
+<VirtualHost *.local:443>
     ServerAdmin webmaster@((((projectKey)))).local
     DocumentRoot "((((documentRoot))))"
     ServerName ((((projectKey)))).local

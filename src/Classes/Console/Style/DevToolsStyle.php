@@ -1,6 +1,8 @@
 <?php
 namespace Glowpointzero\LocalDevTools\Console\Style;
 
+use \Glowpointzero\LocalDevTools\Utility\StringUtility;
+
 class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
 {
     protected $lineWidth = 80;
@@ -99,5 +101,73 @@ class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
             $lines[] = '';
         }
         $this->write($lines, !$inline);
+    }
+
+
+    /**
+     * @param string $answer
+     * @param string $cleanedAnswer
+     * @param boolean $discloseNewValue
+     * @return bool
+     */
+    protected function interactOnCleanedAnswer(&$answer, &$cleanedAnswer, $discloseNewValue = true)
+    {
+        if ($answer === $cleanedAnswer) {
+            return true;
+        }
+        if (!$discloseNewValue) {
+            $this->warning('Detected some invalid ASCII control characters in your input!');
+            return false;
+        } else {
+            
+            $this->warning(
+                'Detected some ASCII control characters in your'
+                . ' input. I\'ve cleaned them out for ya, though. This is the'
+                . ' clean value:'
+                . PHP_EOL . PHP_EOL
+                . '   ' . $cleanedAnswer
+                . PHP_EOL . PHP_EOL
+            );
+            $useCleanedAnswer = $this->confirm('Use this value?');
+            
+            if ($useCleanedAnswer) {
+                $answer = $cleanedAnswer;
+                return true;
+            }
+        }
+        
+        $cleanedAnswer = '';
+        return false;
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function ask($question, $default = null, $validator = null)
+    {
+        $answer = '(answer dummy)';
+        $cleanedAnswer = '(cleaned answer dummy)';
+        while ($answer !== $cleanedAnswer) {
+            $answer = parent::ask($question, $default, $validator);
+            $cleanedAnswer = StringUtility::removeAsciiControlCharacters($answer, $matches);
+            $this->interactOnCleanedAnswer($answer, $cleanedAnswer);
+        }
+        return $answer;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function askHidden($question, $validator = null)
+    {
+        $answer = '(answer dummy)';
+        $cleanedAnswer = '(cleaned answer dummy)';
+        while ($answer !== $cleanedAnswer) {
+            $answer = parent::askHidden($question, $validator);
+            $cleanedAnswer = StringUtility::removeAsciiControlCharacters($answer);
+            $this->interactOnCleanedAnswer($answer, $cleanedAnswer, false);
+        }
+        return $answer;
     }
 }

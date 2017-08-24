@@ -47,8 +47,6 @@ class StringUtility
                 $matches[] = $controlCharacterDec;
             }
         }
-        var_dump($string);
-        var_dump(urldecode($string));
         return urldecode($string);
     }
 }

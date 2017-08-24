@@ -64,6 +64,7 @@ class DevToolsStyle extends \Symfony\Component\Console\Style\SymfonyStyle
     public function processingEnd($message)
     {
         $this->say($message, self::SAY_STYLE_OK, true, false);
+        $this->newLine();
     }
     
     /**

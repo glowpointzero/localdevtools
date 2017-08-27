@@ -98,10 +98,10 @@ abstract class AbstractCommand extends Command
         // Issue warning, if '--no-interaction' has been called
         if ($issueNonInteractiveWarning) {
             $this->io->warning(
-                'The non-interactive version isn\'t quite there yet.'
-                .' But rest assured, that none the commands will require'
-                . ' huge amounts of typing. After all, that\'s one of the'
-                . ' big reason this tool box exists, eh.'
+                'Rest assured, that none the commands will require'
+                . ' huge amounts of typing. You may still be asked.'
+                . ' to provide missing or invalid default values.'
+                . ' Also, you will be bugged with informational messages.'
             );
             sleep(3);
         }

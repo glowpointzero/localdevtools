@@ -56,6 +56,16 @@ abstract class AbstractCommand extends Command
     protected $resultValues = [];
     
     
+    /**
+     * Will be set, if user chooses --no-interaction.
+     * On option validation, valid, non-empty default values
+     * will be used without confirmation by the user.
+     *
+     * @var boolean
+     */
+    protected $skipNonEmptyValidDefaultOptions = false;
+    
+    
     
     protected function configure()
     {
@@ -75,6 +85,7 @@ abstract class AbstractCommand extends Command
         // Catch '--no-interaction' calls and reset
         if (!$input->isInteractive()) {
             $issueNonInteractiveWarning = true;
+            $this->skipNonEmptyValidDefaultOptions = true;
             $input->setInteractive(true);
         } else {
             $issueNonInteractiveWarning = false;
@@ -103,7 +114,6 @@ abstract class AbstractCommand extends Command
     protected function interact(InputInterface $input, OutputInterface $output)
     {
         parent::interact($input, $output);
-        
         
         $this->validateAllOptions();
     }
@@ -239,6 +249,14 @@ abstract class AbstractCommand extends Command
             if ($otherOptionValue === $otherOptionDefault || empty($otherOptionValue)) {
                 $needsValidation = false;
             }
+        }
+        
+        // Respect --no-interaction flag
+        if ($this->skipNonEmptyValidDefaultOptions
+            && !$isEmpty
+            && $isDefaultValue
+            && $this->optionIsValid($optionName)) {
+            $needsValidation = false;
         }
         
         $isAtLeastSecondValidationRound = ($optionDefinition['validationRound'] > 1);

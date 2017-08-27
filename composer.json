@@ -1,7 +1,7 @@
 {
     "name": "glowpointzero/localdevtools",
     "description": "A small tool box for local website development",
-    "license": "MIT",
+    "version": "1.0.0",
     "authors": [
         {
             "name": "Manuel Glauser",

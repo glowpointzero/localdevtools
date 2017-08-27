@@ -14,7 +14,7 @@ use Symfony\Component\Console\Application;
 
 $localDevTools = new Application();
 $localDevTools->setName('Local Dev Tools');
-$localDevTools->setVersion('beta-0.1.0');
+$localDevTools->setVersion('1.0.0');
 
 $localDevTools->add(new \Glowpointzero\LocalDevTools\Command\SetupCommand());
 $localDevTools->add(new \Glowpointzero\LocalDevTools\Command\Configuration\DiagnoseCommand());

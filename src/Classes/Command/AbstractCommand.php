@@ -61,7 +61,8 @@ abstract class AbstractCommand extends Command
     {
         $this->fileSystem = new \Glowpointzero\LocalDevTools\Console\Component\Filesystem();
         $this->localConfiguration = new \Glowpointzero\LocalDevTools\LocalConfiguration($this->fileSystem);
-        
+        $this->localConfiguration->load();
+
         $this
             ->setName($this::COMMAND_NAME)
             ->setDescription($this::COMMAND_DESCRIPTION)
@@ -103,7 +104,6 @@ abstract class AbstractCommand extends Command
     {
         parent::interact($input, $output);
         
-        $this->localConfiguration->load();
         
         $this->validateAllOptions();
     }
@@ -114,7 +114,16 @@ abstract class AbstractCommand extends Command
      *
      * @param string $name                    Option identifier
      * @param string $description             Option description
-     * @param string $default                 Default value (optional)
+     * @param string|array $default           Default value (optional).
+     * Pass an array as a fallback to the first non-empty value.
+     * Use 'localConfiguration:foo' to reference a configuration value.
+     * The first non-empty value will be used as default value.
+     * Example:
+     * [
+     *   'localConfiguration:localDatabaseHost',
+     *   '127.0.0.1'
+     * ]
+     * 
      * @param array $choices                  Option choices (optional)
      * @param mixed $validation               Validate input (true | regex pattern)
      * @param string $onlyValidateIfOptionSet Other option that must be set to trigger the validation of this one
@@ -127,10 +136,26 @@ abstract class AbstractCommand extends Command
             $isBoolean = false;
         }
         
+        // Resolve 'localConfiguration:' prefix
+        if (is_array($default)) {
+            $defaultValue = '';
+            foreach ($default as $defaultValue) {
+                if (strtolower(substr($defaultValue, 0, 19)) === 'localconfiguration:') {
+                    $localConfigurationKey = substr($defaultValue, 19);
+                    $defaultValue = $this->localConfiguration->get($localConfigurationKey, '');
+                }
+                if (!empty($defaultValue)) {
+                    break;
+                }
+            }
+        } else {
+            $defaultValue = $default;
+        }
+        
         // Add original values to options stack
         $this->options[$name] = [
             'description' => $description,
-            'default' => $default,
+            'default' => $defaultValue,
             'choices' => $choices,
             'validation' => $validation === false ? false : $validation,
             'onlyValidateIfOptionSet' => $onlyValidateIfOptionSet,
@@ -142,8 +167,8 @@ abstract class AbstractCommand extends Command
         // REQUIRED means that an option *value* is required (option doesn't work if set, but left empty)
         $inputOptionMode = InputOption::VALUE_REQUIRED;
         if ($isBoolean) {
-            $inputOptionMode = InputOption::VALUE_NONE;
-            $default = null;
+            $inputOptionMode = InputOption::VALUE_OPTIONAL;
+            $defaultValue = $default ? true : false;
         }
         
         parent::addOption(
@@ -151,7 +176,7 @@ abstract class AbstractCommand extends Command
             null,
             $inputOptionMode,
             $description,
-            $default
+            $defaultValue
         );
     }
     

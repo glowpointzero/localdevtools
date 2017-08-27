@@ -45,7 +45,6 @@ class SetupCommand extends AbstractCommand
             sprintf('Ok! Saving your settings into %s.', $this->localConfiguration->getConfigurationFilePathAbs())
         );
         $this->localConfiguration->save();
-
         $runDiagnose = $this->io->success('We\'re done here. Running diagnose in 3 seconds...');
         sleep(3);
         $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);

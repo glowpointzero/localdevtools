@@ -21,7 +21,10 @@ class AbstractDatabaseCommand extends AbstractCommand
             $this->addValidatableOption(
                 'localHost',
                 'Local db host name or ip',
-                '127.0.0.1',
+                [
+                    'localConfiguration:localDatabaseHost',
+                    '127.0.0.1'
+                ],
                 null,
                 '/^[0-9a-z\-\.]{3,}$/i'
             );
@@ -31,7 +34,11 @@ class AbstractDatabaseCommand extends AbstractCommand
             $this->addValidatableOption(
                 'localRootUserName',
                 'Database *ROOT* user name',
-                'root',
+                [
+                    'localConfiguration:localDatabaseRootUser',
+                    'root'
+                ]
+                ,
                 null,
                 '/^[0-9a-z\-\._]{3,}$/i'
             );

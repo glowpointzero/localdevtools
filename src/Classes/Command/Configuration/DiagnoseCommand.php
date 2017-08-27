@@ -17,6 +17,7 @@ class DiagnoseCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->localConfiguration->reload();
         $localConfiguration = $this->localConfiguration->getAll();
         $localConfigurationTableValues = [];
         foreach ($localConfiguration as $configurationKey => $configurationValue) {

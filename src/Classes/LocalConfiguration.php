@@ -24,6 +24,8 @@ class LocalConfiguration
         'hostsFilePath' => '',
         'hostsFileDomainPattern' => '((((projectKey)))).local www.((((projectKey)))).local ((((projectKey)))).lo www.((((projectKey)))).lo',
         'serverRestartCommand' => '',
+        'localDatabaseHost' => '127.0.0.1',
+        'localDatabaseRootUser' => 'root',
         'symlinks' => []
     ];
     const CONFIGURATION_PARAMETERS_DESCRIPTIONS = [
@@ -33,6 +35,8 @@ class LocalConfiguration
         'hostsFilePath' => 'Path to your hosts file.',
         'hostsFileDomainPattern' => 'Pattern used to extend your hosts file when creating new projects. Individual domains may be added during project setup.',
         'serverRestartCommand' => 'Command to restart your local webserver with',
+        'localDatabaseHost' => 'Local database host name',
+        'localDatabaseRootUser' => 'Local database root user name',
         'symlinks' => Command\Link\LinkSetupCommand::class
     ];
     
@@ -178,5 +182,18 @@ class LocalConfiguration
     public function save()
     {
         $this->fileSystem->dumpFile($this->getConfigurationFilePathAbs(), json_encode($this->configuration));
+    }
+    
+    
+    /**
+     * Reloads configuration for the case(s) where the configuration has
+     * changed in the same call (p.e. 'setup' & 'diagnose') and may still
+     * contain the old values as it is loaded in the 'configure' command,
+     * not usually in the 'interact' or 'execute' command anymore.
+     */
+    public function reload()
+    {
+        $this->isLoaded = false;
+        $this->load();
     }
 }

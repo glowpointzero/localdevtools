@@ -23,13 +23,13 @@ class ImportCommand extends AbstractDatabaseCommand
     public function configure()
     {
         parent::configure();
-        
+
         $this->addValidatableOption(
             'importFilePath',
             'Path to the file to import',
             null,
-            '',
-            '/^[0-9a-z\-\._]*$/i'
+            null,
+            '/^[~0-9a-z:\/\-\._\\\]*$/i'
         );
         $this->addValidatableOption(
             'dumpCurrent',

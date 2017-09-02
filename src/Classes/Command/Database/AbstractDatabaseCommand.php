@@ -141,7 +141,13 @@ class AbstractDatabaseCommand extends AbstractCommand
             $returnXml = $commandParts[0] == 'mysql' ? '--xml' : '',
             $commandParts[1]
         );
-        $connectionProcess = new Process($commandLine);
+        $connectionProcess = new Process(
+            $commandLine,
+            null,
+            null,
+            null,
+            600
+        );
         $connectionProcess->run();
         
         return $connectionProcess;

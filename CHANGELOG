@@ -4,4 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.1] - 2017-09-02
+### Fixed
+- The database import parameter 'importFilePath' didn't support all neccessary
+  characters (on validation). Added slashes, tilde, and column.
+
+### Changed
+- Raised all database processes timeout limit to 600 seconds (10 minutes)
+  to allow export / import to take longer when having to deal with large
+  databases

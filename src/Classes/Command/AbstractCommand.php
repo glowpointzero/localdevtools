@@ -134,17 +134,16 @@ abstract class AbstractCommand extends Command
      *   '127.0.0.1'
      * ]
      * 
-     * @param array $choices                  Option choices (optional)
-     * @param mixed $validation               Validate input (true | regex pattern)
+     * @param array|null $choices             Option choices (optional)
+     * @param string|bool $validation         Validate input (true | regex pattern)
      * @param string $onlyValidateIfOptionSet Other option that must be set to trigger the validation of this one
      */
     public function addValidatableOption($name, $description, $default = null, $choices = [], $validation = null, $onlyValidateIfOptionSet = null)
     {
-        if (count($choices) === 2 && in_array(true, $choices) && in_array(false, $choices)) {
-            $isBoolean = true;
-        } else {
-            $isBoolean = false;
+        if (is_null($choices)) {
+            $choices = [];
         }
+        $isBoolean = (count($choices) === 2 && in_array(true, $choices) && in_array(false, $choices));
         
         // Resolve 'localConfiguration:' prefix
         if (is_array($default)) {

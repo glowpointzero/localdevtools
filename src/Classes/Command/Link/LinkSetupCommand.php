@@ -116,23 +116,42 @@ class LinkSetupCommand extends AbstractCommand implements SetupCommandInterface
             . ' dynamically. Imagine registering a symlink called "~/currentproject" '
             . ' with the target set to "/your/way/too/long/path/to/projects/((((Project))))"'
         );
-        $identifier = $this->io->ask('Unique identifier', '');
-        $sourcePath = $this->io->ask('Source path', '');
-        $targetPath = $this->io->ask('Target path', '');
-        $identifierHash = md5($identifier);
+        
+        $doneCreatingShortcut = false;
+        $identifier = '';
+        $sourcePath = '';
+        $targetPath = '';
+        while (!$doneCreatingShortcut) {
+            $identifier = $this->io->ask('Unique identifier', $identifier);
+            $sourcePath = $this->io->ask('Source path (location and name of the symlink)', $sourcePath);
+            $targetPath = $this->io->ask('Target path (existing file or directory)', $targetPath);
+            $identifierHash = md5($identifier);
 
-        if (array_key_exists($identifierHash, $this->symlinkShortcuts)) {
-            $this->io->caution('A shortcut using this identifier exists!');
-            $createSymlinkShortcut = $this->io->confirm('Override?');
-        } else {
-            $createSymlinkShortcut = true;
-        }
+            if (array_key_exists($identifierHash, $this->symlinkShortcuts)) {
+                $this->io->caution('A shortcut using this identifier exists!');
+                $overrideExisting = $this->io->confirm('Override?');
+                if (!$overrideExisting) {
+                    continue;
+                }
+            }
 
-        if ($createSymlinkShortcut) {
+            $targetPathAbsolute = realpath($targetPath);
+            if (!$targetPathAbsolute && $this->io->confirm('The target path does not seem to exist. Continue anyway?', false)) {
+                continue;
+            }
+
+            $sourceDirName = dirname($sourcePath);
+            $sourcePathDir = realpath($sourceDirName);
+            if (!$sourcePathDir && !$this->io->confirm('The source path does not seem to exist. Continue anyway?', false)) {
+                continue;
+            }
+            $sourcePathAbsolute = $sourcePathDir . DIRECTORY_SEPARATOR . basename($sourcePath);
+
+            $doneCreatingShortcut = true;
             $this->symlinkShortcuts[$identifierHash] = [
                 'identifier' => $identifier,
-                'source' => $sourcePath,
-                'target' => $targetPath
+                'source' => $sourcePathAbsolute,
+                'target' => $targetPathAbsolute
             ];
             $this->io->success(sprintf('Added symlink shortcut "%s"', $identifier));
         }

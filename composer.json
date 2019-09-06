@@ -1,19 +1,19 @@
 {
     "name": "glowpointzero/localdevtools",
     "description": "A small tool box for local website development",
-    "version": "1.0.2",
     "authors": [
         {
             "name": "Manuel Glauser",
             "email": "mail@manuelglauser.ch"
         }
     ],
+    "license": "MIT",
     "bin": ["bin/dev"],
     "require": {
-        "symfony/console": "*",
-        "symfony/filesystem": "^3.3",
-        "symfony/validator": "^3.3",
-        "symfony/process": "^3.3",
+        "symfony/console": "^3.3 || ^4.3",
+        "symfony/filesystem": "^3.3 || ^4.3",
+        "symfony/validator": "^3.3 || ^4.3",
+        "symfony/process": "^3.3 || ^4.3",
         "friendsofphp/php-cs-fixer": "^2.4"
     },
     "autoload": {

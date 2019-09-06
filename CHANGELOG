@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2019-09-06
+### Added
+- When updating the settings (running 'dev setup'), some suggestions
+  are now conveniently displayed for direct use (such as a host file
+  paths and server restart commands).
+- The MIT license has been added.
+
+### Changed
+The dependencies now allow the tool to run under symfony console
+4.x as well.
+
+
 ## [1.0.2] - 2018-09-20
 ### Fixed
 - When passing 'null' to the method that initializes the commands' options,
@@ -17,7 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   desired symlink) will be checked for its existence and the user will
   be asked on how to continue, if something seems off. For the - probably
   not yet existing - symlink, the parent directory will be checked.
-  
+
+
 ## [1.0.1] - 2017-09-02
 ### Fixed
 - The database import parameter 'importFilePath' didn't support all neccessary

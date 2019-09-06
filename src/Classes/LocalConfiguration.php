@@ -196,4 +196,54 @@ class LocalConfiguration
         $this->isLoaded = false;
         $this->load();
     }
+
+    /**
+     * @param $configurationParameter
+     * @return array
+     */
+    public function getConfigurationSuggestions($configurationParameter)
+    {
+        $suggestions = [];
+        if ($configurationParameter === 'hostsFilePath') {
+            $suggestions = $this->getSuggestedHostFilePaths();
+        }
+        if ($configurationParameter === 'serverRestartCommand') {
+            $suggestions = $this->getSuggestedServerRestartCommands();
+        }
+        return $suggestions;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getSuggestedHostFilePaths()
+    {
+        $possibleHostFileLocations = [
+            'C:\Windows\System32\drivers\etc\hosts',
+            '/etc/hosts'
+        ];
+        $suggestions = [];
+        foreach ($possibleHostFileLocations as $possibleHostFileLocation) {
+            if (!$this->fileSystem->exists($possibleHostFileLocation)) {
+                continue;
+            }
+            $suggestions[] = $possibleHostFileLocation;
+        }
+
+        return $suggestions;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getSuggestedServerRestartCommands()
+    {
+        return [
+            '/etc/init.d/httpd restart',
+            'sudo systemctl restart apache2',
+            'service httpd restart',
+            'sudo service nginx restart',
+            'net stop Apache2.4; net start Apache2.4',
+        ];
+    }
 }

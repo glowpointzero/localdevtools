@@ -23,20 +23,56 @@ class SetupCommand extends AbstractCommand
     public function execute(InputInterface $input, OutputInterface $output)
     {
         // Iterate through settings and ask to set each one
-        foreach (LocalConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS as $configurationKey => $configurationDescription) {
-            $configurationValue = $this->localConfiguration->get($configurationKey);
-            
-            if (class_exists($configurationDescription)) {
+        foreach ($this->localConfiguration::CONFIGURATION_PARAMETERS_DESCRIPTIONS as $configurationKey => $configurationDescription) {
+            $currentConfigurationValue = $this->localConfiguration->get($configurationKey);
+            $configureViaDedicatedCommand = class_exists($configurationDescription);
+
+            if ($configureViaDedicatedCommand) {
+                $this->io->section(sprintf('Configure "%s"', $configurationKey));
                 $configurationCommand = $this->getApplication()->find($configurationDescription::COMMAND_NAME);
+
+                if (!$this->io->confirm(sprintf('Run "%s" now (you can always do this later)?', $configurationDescription::COMMAND_NAME), false)) {
+                    continue;
+                }
+
                 $configurationCommand->run($input, $output);
                 $configurationValue = $configurationCommand->getResultValue('resultingConfiguration');
-            } else {
-                $configurationValue = $this->io->ask(
-                    $configurationDescription,
-                    $configurationValue
-                );
+                $this->localConfiguration->set($configurationKey, $configurationValue);
+                continue;
             }
-            
+
+            $this->io->section(sprintf('Configure "%s"%s', $configurationKey, PHP_EOL . $configurationDescription));
+            $configurationSuggestions = $this->localConfiguration->getConfigurationSuggestions($configurationKey);
+            $setCustomOption = 'Enter a custom value';
+            $useCurrentOption = sprintf('Use current value ("%s")', $currentConfigurationValue);
+
+            if (count($configurationSuggestions)) {
+                $allConfigurationSuggestions = $configurationSuggestions;
+                array_unshift($allConfigurationSuggestions, $setCustomOption);
+                if ($currentConfigurationValue) {
+                    array_unshift($allConfigurationSuggestions, $useCurrentOption);
+                }
+                $configurationValue = $this->io->choice('Suggestions for this configuration value', $allConfigurationSuggestions, $useCurrentOption);
+                if ($configurationValue === $useCurrentOption) {
+                    continue;
+                }
+            }
+
+            if ($currentConfigurationValue) {
+                $configurationValue = $this->io->choice(
+                    'Your choice',
+                    [
+                        $useCurrentOption,
+                        $setCustomOption
+                    ],
+                    $useCurrentOption
+                );
+                if ($configurationValue === $useCurrentOption) {
+                    continue;
+                }
+            }
+
+            $configurationValue = $this->io->ask($configurationDescription);
             $this->localConfiguration->set($configurationKey, $configurationValue);
         }
         
@@ -45,8 +81,13 @@ class SetupCommand extends AbstractCommand
             sprintf('Ok! Saving your settings into %s.', $this->localConfiguration->getConfigurationFilePathAbs())
         );
         $this->localConfiguration->save();
-        $runDiagnose = $this->io->success('We\'re done here. Running diagnose in 3 seconds...');
-        sleep(3);
-        $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);
+        $this->io->success('We\'re done here.');
+
+        if ($this->io->confirm('Diagnose configuration?')) {
+            $this->getApplication()->find(DiagnoseCommand::COMMAND_NAME)->run($input, $output);
+        } else {
+            $this->io->say(sprintf('Okay, you can always run "%s" to do so.', DiagnoseCommand::COMMAND_NAME));
+        }
+
     }
 }
